@@ -1,8 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "../../public/globals.css";
-import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Lens App",
-  description: "Future of decentralized social",
+  title: "Draw",
+  description: "Draw (?)",
   icons: [{ rel: "icon", url: "/favicon.svg" }],
 };
 

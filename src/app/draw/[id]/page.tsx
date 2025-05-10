@@ -1,23 +1,28 @@
 "use client";
 
-import React, { useState, useRef, useEffect, use } from 'react';
+import React, { useState, useRef, useEffect, use, useCallback } from 'react';
 import { Stage, Layer, Line, Rect, Image as KonvaImage } from 'react-konva';
 import Konva from 'konva';
 import { Button } from '@/components/ui/button';
 import Toolbar, { Tool as ToolbarUITool } from '../../../components/canvas/toolbar';
 import { colorsMatch, performFloodFill, hexToRgba, getPointerPosition } from '@/lib/drawing';
 import LayersPanel from '@/components/canvas/layers';
-import { useDrawingInteractions } from '@/hooks/useDrawingInteractions';
+import { useDrawingInteractions } from '@/hooks/use-interactions';
 import { UserLayerData, ToolbarTool } from '@/lib/types';
+import { Undo, Redo } from 'lucide-react';
 
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
+
+export interface UpdateHistoryOptions {
+  skipHistory?: boolean;
+}
 
 export default function DrawPage({ params }: { params: Promise<{ id: string }> }) {
   const props = use(params);
   const [tool, setTool] = useState<ToolbarUITool>('pen');
 
-  const [layers, setLayers] = useState<UserLayerData[]>([]);
+  const [layers, setLayersInternal] = useState<UserLayerData[]>([]);
   const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
 
   const [layerImageElements, setLayerImageElements] = useState<{ [key: string]: HTMLImageElement }>({});
@@ -30,6 +35,34 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   const stageRef = useRef<Konva.Stage>(null);
   const layerRef = useRef<Konva.Layer>(null);
 
+  const [history, setHistory] = useState<UserLayerData[][]>([]);
+  const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number>(-1);
+
+  const MAX_HISTORY_LENGTH = 50;
+
+  const updateLayersAndHistory = useCallback((
+    newLayersProvider: UserLayerData[] | ((prevState: UserLayerData[]) => UserLayerData[]),
+    options?: UpdateHistoryOptions
+  ) => {
+    setLayersInternal(prevActualLayers => {
+      const newLayers = typeof newLayersProvider === 'function' ? newLayersProvider(prevActualLayers) : newLayersProvider;
+
+      if (!options?.skipHistory) {
+        setHistory(prevHistory => {
+          const historyUpToCurrent = prevHistory.slice(0, currentHistoryIndex + 1);
+          let updatedHistory = [...historyUpToCurrent, newLayers];
+
+          if (updatedHistory.length > MAX_HISTORY_LENGTH) {
+            updatedHistory = updatedHistory.slice(updatedHistory.length - MAX_HISTORY_LENGTH);
+          }
+          setCurrentHistoryIndex(updatedHistory.length - 1);
+          return updatedHistory;
+        });
+      }
+      return newLayers;
+    });
+  }, [currentHistoryIndex, MAX_HISTORY_LENGTH]);
+
   const {
     handleInteractionStart,
     handleInteractionMove,
@@ -37,7 +70,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   } = useDrawingInteractions({
     tool,
     layers,
-    setLayers,
+    setLayers: updateLayersAndHistory,
     activeLayerId,
     fillColor,
     strokeColor,
@@ -70,38 +103,58 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
       rasterDataUrl: initialRasterDataUrl,
     };
 
-    setLayers([initialLayer]);
+    setLayersInternal([initialLayer]);
+    setHistory([[initialLayer]]);
+    setCurrentHistoryIndex(0);
     setActiveLayerId(initialLayerId);
 
   }, []);
 
   useEffect(() => {
+    const newImageElements: { [key: string]: HTMLImageElement } = {};
+    let allLoaded = true;
+    let imageLoadPromises: Promise<void>[] = [];
+
     layers.forEach(layer => {
-      if (layer.rasterDataUrl && (!layerImageElements[layer.id] || layerImageElements[layer.id].src !== layer.rasterDataUrl)) {
-        const img = new window.Image();
-        img.onload = () => {
-          setLayerImageElements(prev => ({ ...prev, [layer.id]: img }));
-        };
-        img.onerror = () => {
-          console.error(`Failed to load raster image for layer ${layer.id}`);
-        };
-        img.src = layer.rasterDataUrl;
-      } else if (!layer.rasterDataUrl && layerImageElements[layer.id]) {
-        setLayerImageElements(prev => {
-          const updated = { ...prev };
-          delete updated[layer.id];
-          return updated;
-        });
+      if (layer.rasterDataUrl) {
+        if (layerImageElements[layer.id] && layerImageElements[layer.id].src === layer.rasterDataUrl) {
+          newImageElements[layer.id] = layerImageElements[layer.id];
+        } else {
+          allLoaded = false;
+          const img = new window.Image();
+          const promise = new Promise<void>((resolve, reject) => {
+            img.onload = () => {
+              newImageElements[layer.id] = img;
+              resolve();
+            };
+            img.onerror = () => {
+              console.error(`Failed to load raster image for layer ${layer.id}`);
+              resolve();
+            };
+          });
+          img.src = layer.rasterDataUrl;
+          imageLoadPromises.push(promise);
+        }
       }
     });
-  }, [layers, layerImageElements]);
+
+    if (!allLoaded) {
+      Promise.all(imageLoadPromises).then(() => {
+        setLayerImageElements(newImageElements);
+      });
+    } else if (Object.keys(newImageElements).length !== Object.keys(layerImageElements).length ||
+      !Object.keys(newImageElements).every(key => layerImageElements[key])) {
+      setLayerImageElements(newImageElements);
+    }
+
+  }, [layers]);
 
   const handleSetActiveLayer = (layerId: string) => {
     setActiveLayerId(layerId);
   };
 
   const handleToggleLayerVisibility = (layerId: string) => {
-    setLayers(prevLayers =>
+    updateLayersAndHistory(prevLayers =>
       prevLayers.map(l =>
         l.id === layerId ? { ...l, isVisible: !l.isVisible } : l
       )
@@ -117,11 +170,11 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
     let newRasterDataUrl = null;
 
     if (ctx) {
-      ctx.fillStyle = "rgba(255, 255, 255, 0)";
+      ctx.fillStyle = "rgba(0, 0, 0, 0)";
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       newRasterDataUrl = offscreenCanvas.toDataURL();
     } else {
-      newRasterDataUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAwAB/mazYAAAAABJRU5ErkJggg==";
+      newRasterDataUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwAB/aurHAAAAABJRU5ErkJggg==";
     }
 
     const newLayer: UserLayerData = {
@@ -131,20 +184,67 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
       opacity: 1,
       rasterDataUrl: newRasterDataUrl,
     };
-    setLayers(prevLayers => [...prevLayers, newLayer]);
+    updateLayersAndHistory(prevLayers => [...prevLayers, newLayer]);
     setActiveLayerId(newLayerId);
   };
 
   const handleDeleteLayer = (layerId: string) => {
-    setLayers(prevLayers => prevLayers.filter(l => l.id !== layerId));
-    if (activeLayerId === layerId) {
-      const remainingLayers = layers.filter(l => l.id !== layerId);
-      setActiveLayerId(remainingLayers.length > 0 ? remainingLayers[0].id : null);
-    }
+    updateLayersAndHistory(prevLayers => {
+      const newLayers = prevLayers.filter(l => l.id !== layerId);
+      if (activeLayerId === layerId) {
+        const oldIndex = prevLayers.findIndex(l => l.id === layerId);
+        if (newLayers.length === 0) {
+          setActiveLayerId(null);
+        } else {
+          const newActiveIndex = Math.max(0, Math.min(oldIndex, newLayers.length - 1));
+          setActiveLayerId(newLayers[newActiveIndex].id);
+        }
+      }
+      return newLayers;
+    });
   };
 
+  const handleUndo = useCallback(() => {
+    if (currentHistoryIndex > 0) {
+      const newIndex = currentHistoryIndex - 1;
+      setCurrentHistoryIndex(newIndex);
+      setLayersInternal(history[newIndex]);
+    }
+  }, [currentHistoryIndex, history]);
+
+  const handleRedo = useCallback(() => {
+    if (currentHistoryIndex < history.length - 1) {
+      const newIndex = currentHistoryIndex + 1;
+      setCurrentHistoryIndex(newIndex);
+      setLayersInternal(history[newIndex]);
+    }
+  }, [currentHistoryIndex, history]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const isModKey = event.ctrlKey || event.metaKey;
+      if (isModKey && event.key === 'z') {
+        event.preventDefault();
+        if (event.shiftKey) {
+          handleRedo();
+        } else {
+          handleUndo();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleUndo, handleRedo]);
+
   return (
-    <div className="relative h-screen w-screen bg-gray-100 flex items-center justify-center">
+    <div className="relative h-screen w-screen bg-gray-100 flex flex-col items-center justify-center">
+      <div className="flex items-center justify-start w-full p-4 absolute top-0 left-0 z-20">
+        {/* Placeholder for future top bar elements if any */}
+      </div>
+
       <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
         <Toolbar
           tool={tool}
@@ -157,7 +257,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
         />
       </div>
 
-      <div className="flex items-center justify-center border border-gray-300 rounded-md bg-gray-200">
+      <div className="flex items-center justify-center border border-gray-300 rounded-md bg-gray-200 shadow-lg">
         <Stage
           width={CANVAS_WIDTH}
           height={CANVAS_HEIGHT}
@@ -208,6 +308,29 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
           onDeleteLayer={handleDeleteLayer}
         />
         <p className="mt-2 text-xs text-gray-500">Drawing ID: {props.id}</p>
+      </div>
+
+      <div className="absolute bottom-4 left-4 z-10 flex space-x-2">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleUndo}
+          disabled={currentHistoryIndex <= 0}
+          title="Undo (Ctrl+Z)"
+          className="bg-background/80 hover:bg-background border-border"
+        >
+          <Undo className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleRedo}
+          disabled={currentHistoryIndex >= history.length - 1}
+          title="Redo (Ctrl+Shift+Z)"
+          className="bg-background/80 hover:bg-background border-border"
+        >
+          <Redo className="h-5 w-5" />
+        </Button>
       </div>
     </div>
   );

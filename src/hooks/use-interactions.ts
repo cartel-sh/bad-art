@@ -7,11 +7,12 @@ import {
   hexToRgba,
 } from '@/lib/drawing';
 import { UserLayerData, ToolbarTool } from '@/lib/types';
+import { UpdateHistoryOptions } from '@/app/draw/[id]/page';
 
 interface UseDrawingInteractionsProps {
   tool: ToolbarTool;
   layers: UserLayerData[];
-  setLayers: React.Dispatch<React.SetStateAction<UserLayerData[]>>;
+  setLayers: (updater: (prevLayers: UserLayerData[]) => UserLayerData[], options?: UpdateHistoryOptions) => void;
   activeLayerId: string | null;
   fillColor: string;
   strokeColor: string;
@@ -34,6 +35,7 @@ export const useDrawingInteractions = ({
   const isDrawing = useRef(false);
   const offscreenCtxRef = useRef<CanvasRenderingContext2D | null>(null);
   const prevPosRef = useRef<{ x: number; y: number } | null>(null);
+  const initialLayerDataOnDrawStart = useRef<string | null>(null);
 
   const handleInteractionStart = useCallback(async (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     const stage = stageRef.current;
@@ -43,6 +45,8 @@ export const useDrawingInteractions = ({
 
     const currentActiveLayer = layers.find(l => l.id === activeLayerId);
     if (!currentActiveLayer) return;
+
+    initialLayerDataOnDrawStart.current = currentActiveLayer.rasterDataUrl;
 
     if ((e.evt instanceof MouseEvent && e.evt.button === 0) || !(e.evt instanceof MouseEvent)) {
       e.evt.preventDefault();
@@ -110,7 +114,7 @@ export const useDrawingInteractions = ({
 
           ctx.beginPath();
           ctx.arc(pos.x, pos.y, strokeWidth / 2, 0, Math.PI * 2);
-          ctx.fillStyle = tool === 'pen' ? strokeColor : 'rgba(0,0,0,0)';
+          ctx.fillStyle = tool === 'pen' ? strokeColor : 'transparent';
           if (tool === 'eraser') {
             ctx.globalCompositeOperation = 'destination-out';
           } else {
@@ -123,7 +127,8 @@ export const useDrawingInteractions = ({
           setLayers(prevLayers =>
             prevLayers.map(l =>
               l.id === activeLayerId ? { ...l, rasterDataUrl: newDataUrl } : l
-            )
+            ),
+            { skipHistory: true }
           );
         };
         img.onerror = () => console.error("Failed to load image for drawing from layer rasterDataUrl");
@@ -152,6 +157,7 @@ export const useDrawingInteractions = ({
       ctx.strokeStyle = strokeColor;
       ctx.globalCompositeOperation = 'source-over';
     } else if (tool === 'eraser') {
+      ctx.strokeStyle = 'rgba(0,0,0,1)';
       ctx.globalCompositeOperation = 'destination-out';
     }
     ctx.stroke();
@@ -163,17 +169,31 @@ export const useDrawingInteractions = ({
     setLayers(prevLayers =>
       prevLayers.map(l =>
         l.id === activeLayerId ? { ...l, rasterDataUrl: newDataUrl } : l
-      )
+      ),
+      { skipHistory: true }
     );
-  }, [layers, activeLayerId, tool, strokeColor, strokeWidth, setLayers, stageRef]);
+  }, [activeLayerId, tool, strokeColor, strokeWidth, setLayers, stageRef]);
 
   const handleInteractionEnd = useCallback(() => {
-    if (tool === 'pen' || tool === 'eraser') {
-      isDrawing.current = false;
-      prevPosRef.current = null;
-      offscreenCtxRef.current = null;
+    if ((tool === 'pen' || tool === 'eraser') && isDrawing.current) {
+      const ctx = offscreenCtxRef.current;
+      if (ctx) {
+        const finalDataUrl = ctx.canvas.toDataURL();
+        const currentLayerState = layers.find(l => l.id === activeLayerId);
+        if (currentLayerState && finalDataUrl !== initialLayerDataOnDrawStart.current) {
+          setLayers(prevLayers =>
+            prevLayers.map(l =>
+              l.id === activeLayerId ? { ...l, rasterDataUrl: finalDataUrl } : l
+            )
+          );
+        }
+      }
     }
-  }, [tool]);
+    isDrawing.current = false;
+    prevPosRef.current = null;
+    offscreenCtxRef.current = null;
+    initialLayerDataOnDrawStart.current = null;
+  }, [tool, setLayers, activeLayerId, layers]);
 
   return { handleInteractionStart, handleInteractionMove, handleInteractionEnd, isDrawingRef: isDrawing };
 }; 

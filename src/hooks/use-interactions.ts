@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import Konva from 'konva';
 import { v4 as uuidv4 } from 'uuid';
 import Color from 'color';
@@ -38,6 +38,85 @@ export const useDrawingInteractions = ({
   const offscreenCtxRef = useRef<CanvasRenderingContext2D | null>(null);
   const initialLayerDataOnDrawStart = useRef<string | null>(null);
   const currentKonvaLineRef = useRef<Konva.Line | null>(null);
+
+  const handleGlobalPointerMove = useCallback((event: MouseEvent | TouchEvent) => {
+    const stage = stageRef.current;
+    if (!isDrawing.current || !activeLayerId || (tool !== 'pen' && tool !== 'eraser') || !stage) {
+      return;
+    }
+
+    // Prevent default only if touch event to avoid scrolling, etc.
+    // Mouse move default is usually fine.
+    if (event.type === 'touchmove') {
+      event.preventDefault();
+    }
+
+    stage.setPointersPositions(event); // Update Konva's internal pointer positions
+    const pos = stage.getPointerPosition(); // Now call without arguments
+    const line = currentKonvaLineRef.current;
+
+    if (!pos || !line) return;
+
+    const newPoints = line.points().concat([pos.x, pos.y]);
+    line.points(newPoints);
+
+    const layer = line.getLayer();
+    if (layer) {
+      layer.batchDraw();
+    } else {
+      stage.batchDraw();
+    }
+  }, [stageRef, activeLayerId, tool]);
+
+  // Define handleInteractionEnd first as handleGlobalPointerUp depends on it.
+  const handleInteractionEnd = useCallback(async () => {
+    // Remove global listeners first, regardless of tool, to ensure cleanup
+    // Note: handleGlobalPointerMove and handleGlobalPointerUp are stable due to their own useCallback.
+    // So they don't strictly need to be in this dependency array if this function doesn't change when they do.
+    // However, including them if this function's identity *should* change when they do is correct.
+    // For listener removal, their current references are needed, obtained from the outer scope.
+    window.removeEventListener('mousemove', handleGlobalPointerMove);
+    window.removeEventListener('touchmove', handleGlobalPointerMove);
+    window.removeEventListener('mouseup', handleGlobalPointerUp); // This will refer to the handleGlobalPointerUp defined below
+    window.removeEventListener('touchend', handleGlobalPointerUp); // This will refer to the handleGlobalPointerUp defined below
+
+    if ((tool === 'pen' || tool === 'eraser') && isDrawing.current && currentKonvaLineRef.current && activeLayerId) {
+      const liveLine = currentKonvaLineRef.current;
+      const newShapeData: VectorShapeData = {
+        id: liveLine.id(),
+        tool: tool,
+        points: liveLine.points(),
+        stroke: liveLine.stroke() as string,
+        strokeWidth: liveLine.strokeWidth(),
+        globalCompositeOperation: liveLine.globalCompositeOperation() as GlobalCompositeOperation,
+        tension: liveLine.tension(),
+      };
+
+      setLayers(prevLayers =>
+        prevLayers.map(l =>
+          l.id === activeLayerId
+            ? { ...l, vectorShapes: [...l.vectorShapes, newShapeData] }
+            : l
+        )
+      );
+
+      if (liveLine) {
+        liveLine.destroy();
+      }
+    }
+
+    isDrawing.current = false;
+    currentKonvaLineRef.current = null;
+    initialLayerDataOnDrawStart.current = null;
+
+  }, [tool, setLayers, activeLayerId, layers, stageRef, strokeColor, strokeWidth]);
+
+  const handleGlobalPointerUp = useCallback(() => {
+    if (isDrawing.current) {
+      handleInteractionEnd();
+    }
+  }, [handleInteractionEnd]);
+
 
   const handleInteractionStart = useCallback(async (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     const stage = stageRef.current;
@@ -86,6 +165,12 @@ export const useDrawingInteractions = ({
         currentKonvaLineRef.current = konvaLine;
         targetLayer.batchDraw();
 
+        // Add window event listeners for pen/eraser
+        window.addEventListener('mousemove', handleGlobalPointerMove);
+        window.addEventListener('touchmove', handleGlobalPointerMove, { passive: false }); // passive: false to allow preventDefault
+        window.addEventListener('mouseup', handleGlobalPointerUp);
+        window.addEventListener('touchend', handleGlobalPointerUp);
+
       } else if (tool === 'bucket') {
         const offscreenCanvas = document.createElement('canvas');
         offscreenCanvas.width = stage.width() * actualPixelRatio;
@@ -126,7 +211,7 @@ export const useDrawingInteractions = ({
         });
       }
     }
-  }, [stageRef, layers, activeLayerId, tool, strokeColor, fillColor, tolerance, strokeWidth, setLayers]);
+  }, [stageRef, layers, activeLayerId, tool, strokeColor, fillColor, tolerance, strokeWidth, setLayers, handleGlobalPointerMove, handleGlobalPointerUp]);
 
   const proceedWithFloodFill = (ctx: CanvasRenderingContext2D, pos: { x: number, y: number }, userData: UserLayerData, canvasWidth: number, canvasHeight: number) => {
     const pixelData = ctx.getImageData(Math.floor(pos.x), Math.floor(pos.y), 1, 1).data;
@@ -170,70 +255,51 @@ export const useDrawingInteractions = ({
   const handleInteractionMove = useCallback((e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     if (!isDrawing.current || !activeLayerId || (tool !== 'pen' && tool !== 'eraser')) return;
 
-    const stage = stageRef.current;
-    const pos = getPointerPosition(stage);
-    const line = currentKonvaLineRef.current;
+    // This function is now largely superseded by handleGlobalPointerMove for pen/eraser.
+    // If the mouse/touch remains within the Konva Stage, this would still fire.
+    // However, handleGlobalPointerMove will also fire.
+    // To prevent double processing or conflicting updates, we can make this a no-op
+    // when global listeners are active for drawing.
+    // The global listeners are preferred as they track outside the canvas.
 
-    if (!pos || !line || !stage) return;
+    // For non-pen/eraser tools, or if not drawing, this might still be relevant.
+    // For now, let's assume pen/eraser drawing is fully handled by global listeners.
 
-    e.evt.preventDefault();
-    e.cancelBubble = true;
+    // const stage = stageRef.current;
+    // const pos = getPointerPosition(stage);
+    // const line = currentKonvaLineRef.current;
 
-    const newPoints = line.points().concat([pos.x, pos.y]);
-    line.points(newPoints);
+    // if (!pos || !line || !stage) return;
 
-    const layer = line.getLayer();
-    if (layer) {
-      layer.batchDraw();
-    } else {
-      stage.batchDraw(); // Fallback if layer somehow not found, though unlikely
-    }
+    // e.evt.preventDefault();
+    // e.cancelBubble = true;
+
+    // const newPoints = line.points().concat([pos.x, pos.y]);
+    // line.points(newPoints);
+
+    // const layer = line.getLayer();
+    // if (layer) {
+    //   layer.batchDraw();
+    // } else {
+    //   stage.batchDraw(); // Fallback if layer somehow not found, though unlikely
+    // }
 
   }, [activeLayerId, tool, stageRef]);
 
-  const handleInteractionEnd = useCallback(async () => {
-    if ((tool === 'pen' || tool === 'eraser') && isDrawing.current && currentKonvaLineRef.current && activeLayerId) {
-      const liveLine = currentKonvaLineRef.current;
+  // Effect for cleaning up window event listeners if the component unmounts
+  useEffect(() => {
+    // Need to ensure the *actual* functions passed to removeEventListener are the same as addEventListener.
+    // This means handleGlobalPointerMove and handleGlobalPointerUp need to be stable references (which they are via useCallback).
+    const currentHandleGlobalPointerMove = handleGlobalPointerMove;
+    const currentHandleGlobalPointerUp = handleGlobalPointerUp;
 
-      const newShapeData: VectorShapeData = {
-        id: liveLine.id(), // Ensure Konva.Line had an ID set during creation
-        tool: tool, // 'pen' or 'eraser'
-        points: liveLine.points(),
-        stroke: liveLine.stroke() as string,
-        strokeWidth: liveLine.strokeWidth(),
-        globalCompositeOperation: liveLine.globalCompositeOperation() as GlobalCompositeOperation,
-        tension: liveLine.tension(),
-      };
-
-      setLayers(prevLayers =>
-        prevLayers.map(l =>
-          l.id === activeLayerId
-            ? { ...l, vectorShapes: [...l.vectorShapes, newShapeData] }
-            : l
-        )
-      );
-      // The Konva.Line (liveLine) remains on its layer. 
-      // It will be re-created from VectorShapeData when layers are rendered or loaded.
-      // Or, if your main component directly manipulates Konva objects based on UserLayerData changes,
-      // this liveLine is already the representation of newShapeData.
-
-      // Destroy the imperatively added line, as it will be re-rendered declaratively
-      if (liveLine) {
-        liveLine.destroy();
-      }
-    }
-    // Bucket tool finalization (setting rasterDataUrl) happens in proceedWithFloodFill
-    // So, only common cleanup is needed here for bucket tool after its async operations complete
-
-    // Common cleanup for all tools after interaction ends
-    isDrawing.current = false;
-    currentKonvaLineRef.current = null;
-    // initialLayerDataOnDrawStart.current is mainly for bucket tool's base raster image, or complex undo later
-    // If bucket tool used it, it should be nulled out after its operation in proceedWithFloodFill or here.
-    // For now, let's ensure it's cleared for all if its primary use was for the interaction that just ended.
-    initialLayerDataOnDrawStart.current = null;
-
-  }, [tool, setLayers, activeLayerId, layers]); // Added layers to dependency array for map
+    return () => {
+      window.removeEventListener('mousemove', currentHandleGlobalPointerMove);
+      window.removeEventListener('touchmove', currentHandleGlobalPointerMove);
+      window.removeEventListener('mouseup', currentHandleGlobalPointerUp);
+      window.removeEventListener('touchend', currentHandleGlobalPointerUp);
+    };
+  }, [handleGlobalPointerMove, handleGlobalPointerUp]);
 
   return { handleInteractionStart, handleInteractionMove, handleInteractionEnd, isDrawingRef: isDrawing };
 };

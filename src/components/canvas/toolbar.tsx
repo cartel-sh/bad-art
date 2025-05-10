@@ -6,7 +6,6 @@ import { Pencil, Eraser, PaintBucket, Palette, Sliders, PowerIcon } from 'lucide
 import {
   ColorPicker,
   ColorPickerSelection,
-  ColorPickerEyeDropper,
   ColorPickerHue,
   ColorPickerAlpha,
   ColorPickerOutput,
@@ -37,7 +36,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   tolerance,
   setTolerance,
 }) => {
-  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showColorPickerPopup, setShowColorPickerPopup] = useState(false);
 
   const handleColorChange = useCallback((value: ColorLike) => {
     const colorObj = Color.rgb(value);
@@ -48,8 +47,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
   }, [setFillColor, setStrokeColor]);
 
   return (
-    <div className="p-1 bg-secondary/10 shadow-lg rounded-lg border border-border flex flex-col space-y-2">
-      <div className="flex flex-col space-y-1 items-center">
+    <div className="p-1 bg-secondary/10 shadow-lg rounded-lg border border-border flex flex-col gap-2 relative">
+      <div className="flex flex-col gap-1 items-center rounded-md">
         <Button
           variant={tool === 'pen' ? 'secondary' : 'ghost'}
           size="icon"
@@ -78,64 +77,67 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <PaintBucket className="h-5 w-5" />
         </Button>
         <Button
-          variant={showColorPicker ? 'secondary' : 'ghost'}
+          variant={showColorPickerPopup ? 'secondary' : 'ghost'}
           size="icon"
-          onClick={() => setShowColorPicker(!showColorPicker)}
+          onClick={() => setShowColorPickerPopup(!showColorPickerPopup)}
           title="Select Color"
-          className={`w-10 h-10 ${!showColorPicker ? 'text-primary-foreground' : ''}`}
+          className={`w-10 h-10 ${!showColorPickerPopup ? 'text-primary-foreground' : ''}`}
         >
           <div
             style={{
               width: '20px',
               height: '20px',
               backgroundColor: fillColor,
-              borderRadius: '50%',
+              borderRadius: '40%',
               border: '1px solid hsl(var(--border))',
-              boxShadow: '0 0 0 1px rgba(0,0,0,0.1)'
             }}
           />
         </Button>
       </div>
 
-      <div className="pt-4 space-y-3">
-        {showColorPicker && (
-          <div className="my-2">
-            <ColorPicker
+      {/* {tool === 'bucket' && (
+        <div className="px-2 absolute top-25 left-14 flex items-center space-x-2 p-1 rounded-md bg-background/20">
+          <label htmlFor="toolbarTolerance" className="flex items-center text-muted-foreground text-sm font-medium" title="Tolerance">
+            Tolerance
+          </label>
+          <Slider
+            id="toolbarTolerance"
+            min={0}
+            max={255}
+            value={[tolerance]}
+            onValueChange={(value) => setTolerance(value[0])}
+            className="w-40 h-6"
+            orientation="horizontal"
+          />
+        </div>
+      )} */}
+
+      <ColorPicker onChange={handleColorChange} className="flex flex-col items-center justify-center gap-2 p-1 rounded-md">
+        <div className="flex flex-col items-center justify-center h-32">
+          <ColorPickerHue orientation="vertical" className="w-6 h-full flex items-center justify-center" />
+        </div>
+        <div className="flex flex-col items-center justify-center h-32">
+          <ColorPickerAlpha orientation="vertical" className="w-6 h-full flex items-center justify-center" />
+        </div>
+
+        {showColorPickerPopup && (
+          <div
+            className="absolute aspect-square h-[280px] top-0 left-16 z-10 transition-all duration-300 ease-in-out transform scale-0 opacity-0 data-[open=true]:scale-100 data-[open=true]:opacity-100 my-2"
+            data-open={showColorPickerPopup}
+          >
+            <div
               onChange={handleColorChange}
-              className="max-w-sm rounded-md border p-4 shadow-sm h-[260px]"
+              className="max-w-sm rounded-md border bg-card/20 p-1 shadow-lg"
             >
-              <ColorPickerSelection />
-              <div className="flex items-center gap-4">
-                <ColorPickerEyeDropper />
-                <div className="grid w-full gap-1">
-                  <ColorPickerHue />
-                  <ColorPickerAlpha />
-                </div>
-              </div>
+              <ColorPickerSelection className="aspect-square w-full" />
               <div className="flex items-center gap-2">
                 <ColorPickerOutput />
                 <ColorPickerFormat />
               </div>
-            </ColorPicker>
+            </div>
           </div>
         )}
-        {tool === 'bucket' && !showColorPicker && (
-          <div className="flex flex-col items-center space-y-2 pt-2">
-            <label htmlFor="toolbarTolerance" className="flex items-center text-sm font-medium">
-              <PowerIcon className="h-4 w-4" />
-            </label>
-            <Slider
-              id="toolbarTolerance"
-              min={0}
-              max={255}
-              value={[tolerance]}
-              onValueChange={(value) => setTolerance(value[0])}
-              className="h-32 w-6 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 data-[orientation=vertical]:min-h-10"
-              orientation="vertical"
-            />
-          </div>
-        )}
-      </div>
+      </ColorPicker>
     </div>
   );
 };

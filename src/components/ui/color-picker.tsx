@@ -59,8 +59,9 @@ export const ColorPicker = ({
   defaultValue = '#000000',
   onChange,
   className,
+  children,
   ...props
-}: ColorPickerProps) => {
+}: ColorPickerProps & { children?: React.ReactNode }) => {
   const selectedColor = Color(value);
   const defaultColor = Color(defaultValue);
 
@@ -116,7 +117,9 @@ export const ColorPicker = ({
       <div
         className={cn('flex size-full flex-col gap-4', className)}
         {...props}
-      />
+      >
+        {children}
+      </div>
     </ColorPickerContext.Provider>
   );
 };
@@ -202,8 +205,9 @@ export type ColorPickerHueProps = ComponentProps<typeof Root>;
 
 export const ColorPickerHue = ({
   className,
+  orientation = 'horizontal',
   ...props
-}: ColorPickerHueProps) => {
+}: ColorPickerHueProps & { orientation?: 'horizontal' | 'vertical' }) => {
   const { hue, setHue } = useColorPicker();
 
   return (
@@ -211,14 +215,43 @@ export const ColorPickerHue = ({
       value={[hue]}
       max={360}
       step={1}
-      className={cn('relative flex h-4 w-full touch-none', className)}
+      orientation={orientation}
+      className={cn(
+        'relative flex touch-none',
+        orientation === 'horizontal' ? 'h-4 w-full' : 'h-full w-4 flex-col',
+        className
+      )}
       onValueChange={([hue]) => setHue(hue)}
       {...props}
     >
-      <Track className="relative my-0.5 h-3 w-full grow rounded-full bg-[linear-gradient(90deg,#FF0000,#FFFF00,#00FF00,#00FFFF,#0000FF,#FF00FF,#FF0000)]">
-        <Range className="absolute h-full" />
+      <Track
+        className={cn(
+          'relative grow rounded-full',
+          orientation === 'horizontal'
+            ? 'my-0.5 h-2 w-full'
+            : 'mx-0.5 w-2 h-full',
+          'bg-[linear-gradient(to_right_top,#FF0000,#FFFF00,#00FF00,#00FFFF,#0000FF,#FF00FF,#FF0000)]'
+        )}
+        style={
+          orientation === 'vertical'
+            ? {
+              background:
+                'linear-gradient(to bottom, #FF0000, #FFFF00, #00FF00, #00FFFF, #0000FF, #FF00FF, #FF0000)',
+            }
+            : {
+              background:
+                'linear-gradient(to right, #FF0000, #FFFF00, #00FF00, #00FFFF, #0000FF, #FF00FF, #FF0000)',
+            }
+        }
+      >
+        <Range className="absolute h-full rounded-full" />
       </Track>
-      <Thumb className="block h-4 w-4 rounded-full border border-primary/50 bg-background shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50" />
+      <Thumb
+        className={cn(
+          'block h-4 w-4 rounded-full border border-primary/50 shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
+          orientation === 'vertical' && 'h-4 w-4' // Adjust thumb for vertical
+        )}
+      />
     </Root>
   );
 };
@@ -227,30 +260,57 @@ export type ColorPickerAlphaProps = ComponentProps<typeof Root>;
 
 export const ColorPickerAlpha = ({
   className,
+  orientation = 'horizontal',
   ...props
-}: ColorPickerAlphaProps) => {
+}: ColorPickerAlphaProps & { orientation?: 'horizontal' | 'vertical' }) => {
   const { alpha, setAlpha } = useColorPicker();
+  const { hue, saturation, lightness } = useColorPicker();
+  const color = Color.hsl(hue, saturation, lightness);
+  const solidColor = color.rgb().string();
 
   return (
     <Root
       value={[alpha]}
       max={100}
       step={1}
-      className={cn('relative flex h-4 w-full touch-none', className)}
+      orientation={orientation}
+      className={cn(
+        'relative flex touch-none',
+        orientation === 'horizontal' ? 'h-4 w-full' : 'h-full w-4 flex-col',
+        className
+      )}
       onValueChange={([alpha]) => setAlpha(alpha)}
       {...props}
     >
       <Track
-        className="relative my-0.5 h-3 w-full grow rounded-full"
+        className={cn(
+          'relative grow rounded-full',
+          orientation === 'horizontal'
+            ? 'my-0.5 h-2 w-full'
+            : 'mx-0.5 w-2 h-full'
+        )}
         style={{
           background:
-            'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAMUlEQVQ4T2NkYGAQYcAP3uCTZhw1gGGYhAGBZIA/nYDCgBDAm9BGDWAAJyRCgLaBCAAgXwixzAS0pgAAAABJRU5ErkJggg==") left center',
+            'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAMUlEQVQ4T2NkYGAQYcAP3uCTZhw1gGGYhAGBZIA/nYDCgBDAm9BGDWAAJyRCgLaBCAAgXwixzAS0pgAAAABJRU5ErkJggg==") center',
         }}
       >
-        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent to-black/50" />
+        <div
+          className="absolute inset-0 rounded-full"
+          style={{
+            background:
+              orientation === 'horizontal'
+                ? `linear-gradient(to right, transparent, ${solidColor})`
+                : `linear-gradient(to top, transparent, ${solidColor})`,
+          }}
+        />
         <Range className="absolute h-full rounded-full bg-transparent" />
       </Track>
-      <Thumb className="block h-4 w-4 rounded-full border border-primary/50 bg-background shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50" />
+      <Thumb
+        className={cn(
+          'block h-4 w-4 rounded-full border border-primary/50 bg-background shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
+          orientation === 'vertical' && 'h-4 w-4' // Adjust thumb for vertical
+        )}
+      />
     </Root>
   );
 };
@@ -391,7 +451,7 @@ export const ColorPickerFormat = ({
             readOnly
             className={cn(
               'h-8 rounded-r-none bg-secondary px-2 text-xs shadow-none',
-              index && 'rounded-l-none',
+              index !== 0 && 'rounded-l-none', // ensure first input has left radius
               className
             )}
           />
@@ -442,7 +502,7 @@ export const ColorPickerFormat = ({
             readOnly
             className={cn(
               'h-8 rounded-r-none bg-secondary px-2 text-xs shadow-none',
-              index && 'rounded-l-none',
+              index !== 0 && 'rounded-l-none', // ensure first input has left radius
               className
             )}
           />

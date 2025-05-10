@@ -94,9 +94,7 @@ export const ColorPicker = ({
   useEffect(() => {
     if (onChange) {
       const color = Color.hsl(hue, saturation, lightness).alpha(alpha / 100);
-      const rgba = color.rgb().array();
-
-      onChange([rgba[0], rgba[1], rgba[2], alpha / 100]);
+      onChange(color.rgb().array());
     }
   }, [hue, saturation, lightness, alpha, onChange]);
 

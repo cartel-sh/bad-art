@@ -5,7 +5,7 @@ import { Stage, Layer, Line, Rect, Image as KonvaImage } from 'react-konva';
 import Konva from 'konva';
 import { Button } from '@/components/ui/button';
 import Toolbar, { Tool as ToolbarUITool } from '../../../components/canvas/toolbar';
-import { colorsMatch, performFloodFill, hexToRgba, getPointerPosition } from '@/lib/drawing';
+import { colorsMatch, getPointerPosition } from '@/lib/drawing';
 import LayersPanel from '@/components/canvas/layers';
 import HistoryControls from '@/components/canvas/history';
 import { useDrawingInteractions } from '@/hooks/use-interactions';
@@ -34,7 +34,6 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   const [strokeWidth, setStrokeWidth] = useState<number>(5);
 
   const stageRef = useRef<Konva.Stage>(null);
-  const layerRef = useRef<Konva.Layer>(null);
 
   const [history, setHistory] = useState<UserLayerData[][]>([]);
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number>(-1);
@@ -102,6 +101,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
       isVisible: true,
       opacity: 1,
       rasterDataUrl: initialRasterDataUrl,
+      vectorShapes: [],
     };
 
     setLayersInternal([initialLayer]);
@@ -184,6 +184,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
       isVisible: true,
       opacity: 1,
       rasterDataUrl: newRasterDataUrl,
+      vectorShapes: [],
     };
     updateLayersAndHistory(prevLayers => [...prevLayers, newLayer]);
     setActiveLayerId(newLayerId);
@@ -274,30 +275,54 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
           ref={stageRef}
           className="rounded-md overflow-hidden"
         >
-          <Layer ref={layerRef}>
-            {layers.map(layer => {
-              if (!layer.isVisible) {
-                return null;
-              }
-              const imageElement = layerImageElements[layer.id];
+          {layers.map(layer => {
+            if (!layer.isVisible) {
+              return null;
+            }
+            const imageElement = layerImageElements[layer.id];
 
-              return (
-                <React.Fragment key={layer.id}>
-                  {imageElement && layer.rasterDataUrl && (
-                    <KonvaImage
-                      image={imageElement}
-                      x={0}
-                      y={0}
-                      width={CANVAS_WIDTH}
-                      height={CANVAS_HEIGHT}
-                      listening={false}
-                      opacity={layer.opacity}
-                    />
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </Layer>
+            return (
+              <Layer
+                key={layer.id}
+                id={layer.id}
+                opacity={layer.opacity}
+                visible={layer.isVisible}
+                listening={false}
+              >
+                {imageElement && layer.rasterDataUrl && (
+                  <KonvaImage
+                    image={imageElement}
+                    x={0}
+                    y={0}
+                    width={CANVAS_WIDTH}
+                    height={CANVAS_HEIGHT}
+                    listening={false}
+                    opacity={1}
+                  />
+                )}
+                {layer.vectorShapes.map(shape => {
+                  if (shape.tool === 'pen' || shape.tool === 'eraser') {
+                    return (
+                      <Line
+                        key={shape.id}
+                        id={shape.id}
+                        points={shape.points}
+                        stroke={shape.stroke}
+                        strokeWidth={shape.strokeWidth}
+                        lineCap="round"
+                        lineJoin="round"
+                        tension={shape.tension !== undefined ? shape.tension : 0.1}
+                        globalCompositeOperation={shape.globalCompositeOperation}
+                        perfectDrawEnabled={false}
+                        listening={false}
+                      />
+                    );
+                  }
+                  return null;
+                })}
+              </Layer>
+            );
+          })}
         </Stage>
       </div>
 

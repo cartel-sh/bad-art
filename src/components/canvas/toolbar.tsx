@@ -1,8 +1,20 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Pencil, Eraser, PaintBucket, Palette } from 'lucide-react';
+import { Pencil, Eraser, PaintBucket, Palette, Sliders, PowerIcon } from 'lucide-react';
+import {
+  ColorPicker,
+  ColorPickerSelection,
+  ColorPickerEyeDropper,
+  ColorPickerHue,
+  ColorPickerAlpha,
+  ColorPickerOutput,
+  ColorPickerFormat,
+} from '@/components/ui/color-picker';
+import Color, { ColorLike } from 'color';
+import { Input } from '../ui/input';
+import { Slider } from '../ui/slider';
 
 export type Tool = 'pen' | 'eraser' | 'bucket';
 
@@ -25,12 +37,15 @@ const Toolbar: React.FC<ToolbarProps> = ({
   tolerance,
   setTolerance,
 }) => {
-  const handleColorChange = (newColor: string) => {
-    setFillColor(newColor);
-    if (tool === 'pen') {
-      setStrokeColor(newColor);
-    }
-  };
+  const [showColorPicker, setShowColorPicker] = useState(false);
+
+  const handleColorChange = useCallback((value: ColorLike) => {
+    const colorObj = Color.rgb(value);
+    const rgbaString = colorObj.rgb().string();
+
+    setFillColor(rgbaString);
+    setStrokeColor(rgbaString);
+  }, [setFillColor, setStrokeColor]);
 
   return (
     <div className="p-1 bg-secondary/10 shadow-lg rounded-lg border border-border flex flex-col space-y-2">
@@ -62,37 +77,61 @@ const Toolbar: React.FC<ToolbarProps> = ({
         >
           <PaintBucket className="h-5 w-5" />
         </Button>
+        <Button
+          variant={showColorPicker ? 'secondary' : 'ghost'}
+          size="icon"
+          onClick={() => setShowColorPicker(!showColorPicker)}
+          title="Select Color"
+          className={`w-10 h-10 ${!showColorPicker ? 'text-primary-foreground' : ''}`}
+        >
+          <div
+            style={{
+              width: '20px',
+              height: '20px',
+              backgroundColor: fillColor,
+              borderRadius: '50%',
+              border: '1px solid hsl(var(--border))',
+              boxShadow: '0 0 0 1px rgba(0,0,0,0.1)'
+            }}
+          />
+        </Button>
       </div>
 
       <div className="pt-4 space-y-3">
-        <div>
-          <label htmlFor="toolbarFillColor" className="block text-sm font-medium text-gray-700 mb-1">
-            Color
-          </label>
-          <div className="flex items-center space-x-2">
-            <Palette className="h-5 w-5 text-gray-500" />
-            <input
-              type="color"
-              id="toolbarFillColor"
-              value={fillColor}
-              onChange={(e) => handleColorChange(e.target.value)}
-              className="w-full h-8 p-1 border border-gray-300 rounded-md cursor-pointer"
-            />
+        {showColorPicker && (
+          <div className="my-2">
+            <ColorPicker
+              onChange={handleColorChange}
+              className="max-w-sm rounded-md border p-4 shadow-sm h-[260px]"
+            >
+              <ColorPickerSelection />
+              <div className="flex items-center gap-4">
+                <ColorPickerEyeDropper />
+                <div className="grid w-full gap-1">
+                  <ColorPickerHue />
+                  <ColorPickerAlpha />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <ColorPickerOutput />
+                <ColorPickerFormat />
+              </div>
+            </ColorPicker>
           </div>
-        </div>
-        {tool === 'bucket' && (
-          <div>
-            <label htmlFor="toolbarTolerance" className="block text-sm font-medium text-gray-700 mb-1">
-              Fill Tolerance ({tolerance})
+        )}
+        {tool === 'bucket' && !showColorPicker && (
+          <div className="flex flex-col items-center space-y-2 pt-2">
+            <label htmlFor="toolbarTolerance" className="flex items-center text-sm font-medium">
+              <PowerIcon className="h-4 w-4" />
             </label>
-            <input
-              type="range"
+            <Slider
               id="toolbarTolerance"
-              min="0"
-              max="255"
-              value={tolerance}
-              onChange={(e) => setTolerance(parseInt(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              min={0}
+              max={255}
+              value={[tolerance]}
+              onValueChange={(value) => setTolerance(value[0])}
+              className="h-32 w-6 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 data-[orientation=vertical]:min-h-10"
+              orientation="vertical"
             />
           </div>
         )}

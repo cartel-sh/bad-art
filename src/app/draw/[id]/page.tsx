@@ -328,6 +328,8 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
 
       <div className="absolute right-4 top-4 z-10">
         <LayersPanel
+          mainCanvasWidth={CANVAS_WIDTH}
+          mainCanvasHeight={CANVAS_HEIGHT}
           layers={layers}
           activeLayerId={activeLayerId}
           onSetActiveLayer={handleSetActiveLayer}

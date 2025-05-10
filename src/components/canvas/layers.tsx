@@ -4,6 +4,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Eye, EyeOff, Trash2, PlusSquare, ImageOff } from 'lucide-react';
 import { UserLayerData } from '@/lib/types';
+import LayerPreview from './layer-preview';
 
 export interface LayersPanelProps {
   layers: UserLayerData[];
@@ -12,7 +13,11 @@ export interface LayersPanelProps {
   onToggleVisibility: (layerId: string) => void;
   onAddLayer: () => void;
   onDeleteLayer: (layerId: string) => void;
+  mainCanvasWidth: number;
+  mainCanvasHeight: number;
 }
+
+const THUMB_SIZE = 32;
 
 const LayersPanel: React.FC<LayersPanelProps> = ({
   layers,
@@ -21,6 +26,8 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
   onToggleVisibility,
   onAddLayer,
   onDeleteLayer,
+  mainCanvasWidth,
+  mainCanvasHeight,
 }) => {
   return (
     <div className="w-60 p-1 shadow-lg rounded-lg bg-secondary/20 border border-border flex flex-col gap-2">
@@ -39,8 +46,14 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
             onClick={() => onSetActiveLayer(layer.id)}
           >
             <div className="w-8 h-8 rounded border border-border/50 bg-secondary/30 flex items-center justify-center overflow-hidden">
-              {layer.rasterDataUrl ? (
-                <img src={layer.rasterDataUrl} alt={layer.name} className="w-full h-full object-contain" />
+              {(layer.rasterDataUrl || (layer.vectorShapes && layer.vectorShapes.length > 0)) && mainCanvasWidth > 0 && mainCanvasHeight > 0 ? (
+                <LayerPreview
+                  layerData={layer}
+                  thumbWidth={THUMB_SIZE}
+                  thumbHeight={THUMB_SIZE}
+                  mainCanvasWidth={mainCanvasWidth}
+                  mainCanvasHeight={mainCanvasHeight}
+                />
               ) : (
                 <ImageOff className="w-4 h-4 text-primary-foreground/50" />
               )}

@@ -3,7 +3,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Eye, EyeOff, Trash2, PlusSquare, ImageOff } from 'lucide-react';
-import { UserLayerData } from '@/lib/types'; // Import from new types.ts
+import { UserLayerData } from '@/lib/types';
 
 export interface LayersPanelProps {
   layers: UserLayerData[];
@@ -12,8 +12,6 @@ export interface LayersPanelProps {
   onToggleVisibility: (layerId: string) => void;
   onAddLayer: () => void;
   onDeleteLayer: (layerId: string) => void;
-  // onReorderLayer: (layerId: string, direction: 'up' | 'down') => void; // For future
-  // onChangeOpacity: (layerId: string, opacity: number) => void; // For future
 }
 
 const LayersPanel: React.FC<LayersPanelProps> = ({
@@ -32,8 +30,8 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
           <PlusSquare className="h-4 w-4" />
         </Button>
       </div>
-      <div className="space-y-1 overflow-y-auto max-h-96 pr-1"> {/* Added padding-right for scrollbar */}
-        {layers.slice().reverse().map((layer) => ( // Slice to reverse a copy for Photoshop-like top-first order
+      <div className="space-y-1 overflow-y-auto max-h-96 pr-1">
+        {layers.slice().reverse().map((layer) => (
           <div
             key={layer.id}
             className={`flex items-center space-x-2 p-1.5 rounded-md border cursor-pointer hover:bg-secondary/30
@@ -54,7 +52,7 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
               variant="ghost"
               size="icon"
               onClick={(e) => {
-                e.stopPropagation(); // Prevent setting active layer when clicking button
+                e.stopPropagation(); 
                 onToggleVisibility(layer.id);
               }}
               title={layer.isVisible ? 'Hide Layer' : 'Show Layer'}

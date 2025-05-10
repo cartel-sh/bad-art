@@ -8,7 +8,7 @@ import Toolbar, { Tool as ToolbarUITool } from '../../../components/canvas/toolb
 import { colorsMatch, performFloodFill, hexToRgba, getPointerPosition } from '@/lib/drawing';
 import LayersPanel from '@/components/canvas/layers';
 import { useDrawingInteractions } from '@/hooks/useDrawingInteractions';
-import { UserLayerData, VectorShapeData, ToolbarTool } from '@/lib/types';
+import { UserLayerData, ToolbarTool } from '@/lib/types';
 
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
@@ -17,11 +17,9 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   const props = use(params);
   const [tool, setTool] = useState<ToolbarUITool>('pen');
 
-  // New state for layers
   const [layers, setLayers] = useState<UserLayerData[]>([]);
   const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
 
-  // State to manage HTMLImageElements for raster layers, mapping layerId to Image
   const [layerImageElements, setLayerImageElements] = useState<{ [key: string]: HTMLImageElement }>({});
 
   const [fillColor, setFillColor] = useState<string>('#000000');
@@ -32,7 +30,6 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   const stageRef = useRef<Konva.Stage>(null);
   const layerRef = useRef<Konva.Layer>(null);
 
-  // Use the custom hook for drawing interactions
   const {
     handleInteractionStart,
     handleInteractionMove,
@@ -50,7 +47,6 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   });
 
   useEffect(() => {
-    // Initialize a default layer
     const initialLayerId = `layer-${Date.now()}`;
     const offscreenCanvas = document.createElement('canvas');
     offscreenCanvas.width = CANVAS_WIDTH;
@@ -59,12 +55,11 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
     let initialRasterDataUrl = null;
 
     if (ctx) {
-      ctx.fillStyle = 'white'; // Start with a white background
+      ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       initialRasterDataUrl = offscreenCanvas.toDataURL();
     } else {
-      // Fallback for safety
-      initialRasterDataUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAwAB/mazYAAAAABJRU5ErkJggg=="; // 1x1 transparent, though white is intended
+      initialRasterDataUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAwAB/mazYAAAAABJRU5ErkJggg==";
     }
 
     const initialLayer: UserLayerData = {
@@ -73,7 +68,6 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
       isVisible: true,
       opacity: 1,
       rasterDataUrl: initialRasterDataUrl,
-      vectorShapes: [],
     };
 
     setLayers([initialLayer]);
@@ -81,7 +75,6 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
 
   }, []);
 
-  // Effect to load HTMLImageElements when rasterDataUrl changes for any layer
   useEffect(() => {
     layers.forEach(layer => {
       if (layer.rasterDataUrl && (!layerImageElements[layer.id] || layerImageElements[layer.id].src !== layer.rasterDataUrl)) {
@@ -101,9 +94,8 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
         });
       }
     });
-  }, [layers]);
+  }, [layers, layerImageElements]);
 
-  // Layer Management Functions
   const handleSetActiveLayer = (layerId: string) => {
     setActiveLayerId(layerId);
   };
@@ -125,8 +117,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
     let newRasterDataUrl = null;
 
     if (ctx) {
-      // New layers are transparent by default, or could be white like initial
-      ctx.fillStyle = "rgba(255, 255, 255, 0)"; // Transparent
+      ctx.fillStyle = "rgba(255, 255, 255, 0)";
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       newRasterDataUrl = offscreenCanvas.toDataURL();
     } else {
@@ -139,21 +130,18 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
       isVisible: true,
       opacity: 1,
       rasterDataUrl: newRasterDataUrl,
-      vectorShapes: [],
     };
     setLayers(prevLayers => [...prevLayers, newLayer]);
-    setActiveLayerId(newLayerId); // Optionally make new layer active
+    setActiveLayerId(newLayerId);
   };
 
   const handleDeleteLayer = (layerId: string) => {
     setLayers(prevLayers => prevLayers.filter(l => l.id !== layerId));
-    // If active layer is deleted, set active to another layer or null
     if (activeLayerId === layerId) {
       const remainingLayers = layers.filter(l => l.id !== layerId);
       setActiveLayerId(remainingLayers.length > 0 ? remainingLayers[0].id : null);
     }
   };
-  // End Layer Management Functions
 
   return (
     <div className="relative h-screen w-screen bg-gray-100 flex items-center justify-center">
@@ -186,13 +174,12 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
           <Layer ref={layerRef}>
             {layers.map(layer => {
               if (!layer.isVisible) {
-                return null; // Skip rendering if layer is not visible
+                return null;
               }
               const imageElement = layerImageElements[layer.id];
 
               return (
                 <React.Fragment key={layer.id}>
-                  {/* Render layer's raster content */}
                   {imageElement && layer.rasterDataUrl && (
                     <KonvaImage
                       image={imageElement}
@@ -200,27 +187,10 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
                       y={0}
                       width={CANVAS_WIDTH}
                       height={CANVAS_HEIGHT}
-                      listening={false} // Raster base is not directly interactive
-                      opacity={layer.opacity} // Apply layer opacity
+                      listening={false}
+                      opacity={layer.opacity}
                     />
                   )}
-                  {/* Render layer's vector shapes on top of its raster content */}
-                  {layer.vectorShapes.map(shape => (
-                    <Line
-                      key={shape.id}
-                      points={shape.points}
-                      stroke={shape.stroke}
-                      strokeWidth={shape.strokeWidth}
-                      tension={0.5}
-                      lineCap="round"
-                      lineJoin="round"
-                      globalCompositeOperation={
-                        shape.type === 'eraser' ? 'destination-out' : 'source-over'
-                      }
-                      opacity={layer.opacity} // Apply layer opacity to vector shapes too
-                    // Note: eraser with opacity might behave unexpectedly if opacity is < 1
-                    />
-                  ))}
                 </React.Fragment>
               );
             })}

@@ -37,8 +37,7 @@ export const performFloodFill = (args: {
 
   // If the start pixel is already the fill color (within tolerance), do nothing (or handle as needed)
   if (colorsMatch(initialR, initialG, initialB, initialA, newFillColor.r, newFillColor.g, newFillColor.b, newFillColor.a, tolerance)) {
-    // console.log("Clicked on an area already matching the fill color within tolerance.");
-    // return null; // Or return original imageData if no change is needed
+    return null;
   }
 
   q.push([startX, startY]);
@@ -87,65 +86,7 @@ export const hexToRgba = (hex: string, alpha: number = 255) => {
   return { r, g, b, a: alpha };
 };
 
-// Utility to get pointer position from Konva stage
 export const getPointerPosition = (stage: import('konva').default.Stage | null) => {
   if (!stage) return null;
   return stage.getPointerPosition();
 };
-
-import { UserLayerData, VectorShapeData, ToolbarTool } from './types'; // Import from new types.ts
-
-export const startPath = (
-  layers: UserLayerData[],
-  activeLayerId: string,
-  point: { x: number; y: number },
-  tool: ToolbarTool,
-  strokeColor: string,
-  // fillColor: string, // Pen tool uses strokeColor for fill if needed, eraser doesn't fill
-  strokeWidth: number
-): UserLayerData[] => {
-  if (!point) return layers;
-  const newShape: VectorShapeData = {
-    id: `shape-${Date.now()}`,
-    type: tool,
-    points: [point.x, point.y],
-    stroke: tool === 'pen' ? strokeColor : (tool === 'eraser' ? '#FFFFFF' : undefined), // Eraser color is arbitrary, as it uses destination-out
-    strokeWidth: strokeWidth,
-    fill: tool === 'pen' ? strokeColor : undefined,
-  };
-
-  return layers.map(layer =>
-    layer.id === activeLayerId
-      ? { ...layer, vectorShapes: [...layer.vectorShapes, newShape] }
-      : layer
-  );
-};
-
-export const addPointToPath = (
-  layers: UserLayerData[],
-  activeLayerId: string,
-  point: { x: number; y: number }
-): UserLayerData[] => {
-  if (!point) return layers;
-  return layers.map(layer => {
-    if (layer.id === activeLayerId) {
-      const lastShape = layer.vectorShapes[layer.vectorShapes.length - 1];
-      if (lastShape && lastShape.points) {
-        const newPoints = lastShape.points.concat([point.x, point.y]);
-        const updatedShape = { ...lastShape, points: newPoints };
-        return {
-          ...layer,
-          vectorShapes: [
-            ...layer.vectorShapes.slice(0, -1),
-            updatedShape,
-          ],
-        };
-      }
-    }
-    return layer;
-  });
-};
-
-// Flood fill will still largely be orchestrated in the hook/DrawPage due to its async image processing nature
-// and direct calls to performFloodFill. This file primarily handles synchronous state transformations.
-// However, we can have helpers if needed. For now, performFloodFill is the core utility. 

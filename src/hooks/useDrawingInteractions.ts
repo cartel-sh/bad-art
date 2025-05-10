@@ -2,25 +2,22 @@ import { useRef, useCallback } from 'react';
 import Konva from 'konva';
 import {
   getPointerPosition,
-  startPath,
-  addPointToPath,
   performFloodFill,
   colorsMatch,
   hexToRgba,
 } from '@/lib/drawing';
-import { UserLayerData, VectorShapeData, ToolbarTool } from '@/lib/types'; // Import from types.ts
+import { UserLayerData, ToolbarTool } from '@/lib/types';
 
 interface UseDrawingInteractionsProps {
-  tool: ToolbarTool; // This should be ToolbarTool from types.ts
+  tool: ToolbarTool;
   layers: UserLayerData[];
   setLayers: React.Dispatch<React.SetStateAction<UserLayerData[]>>;
   activeLayerId: string | null;
   fillColor: string;
   strokeColor: string;
   tolerance: number;
-  strokeWidth: number; // Added strokeWidth
-  stageRef: React.RefObject<Konva.Stage | null>; // Allow stageRef.current to be null initially
-  // layerImageElements: { [key: string]: HTMLImageElement }; // Needed for flood fill source image
+  strokeWidth: number;
+  stageRef: React.RefObject<Konva.Stage | null>;
 }
 
 export const useDrawingInteractions = ({
@@ -33,9 +30,10 @@ export const useDrawingInteractions = ({
   tolerance,
   strokeWidth,
   stageRef,
-  // layerImageElements,
 }: UseDrawingInteractionsProps) => {
   const isDrawing = useRef(false);
+  const offscreenCtxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const prevPosRef = useRef<{ x: number; y: number } | null>(null);
 
   const handleInteractionStart = useCallback(async (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     const stage = stageRef.current;
@@ -50,6 +48,13 @@ export const useDrawingInteractions = ({
       e.evt.preventDefault();
       e.cancelBubble = true;
 
+      const offscreenCanvas = document.createElement('canvas');
+      offscreenCanvas.width = stage?.width() || 500;
+      offscreenCanvas.height = stage?.height() || 500;
+      const ctx = offscreenCanvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) return;
+      offscreenCtxRef.current = ctx;
+
       if (tool === 'bucket') {
         if (!currentActiveLayer.rasterDataUrl) {
           console.warn("Active layer raster data is not available for flood fill.");
@@ -58,13 +63,8 @@ export const useDrawingInteractions = ({
         const dataURL = currentActiveLayer.rasterDataUrl;
         const imgToProcess = new window.Image();
         imgToProcess.onload = async () => {
-          const offscreenCanvas = document.createElement('canvas');
-          offscreenCanvas.width = stage?.width() || 500;
-          offscreenCanvas.height = stage?.height() || 500;
-          const ctx = offscreenCanvas.getContext('2d', { willReadFrequently: true });
-          if (!ctx) return;
-
           ctx.drawImage(imgToProcess, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
+
           const pixelData = ctx.getImageData(Math.floor(pos.x), Math.floor(pos.y), 1, 1).data;
           const targetRgba = { r: pixelData[0], g: pixelData[1], b: pixelData[2], a: pixelData[3] };
           const currentFillRgba = hexToRgba(fillColor, 255);
@@ -92,31 +92,86 @@ export const useDrawingInteractions = ({
               )
             );
           }
+          offscreenCtxRef.current = null;
         };
-        imgToProcess.onerror = () => console.error("Failed to load image for flood fill from layer rasterDataUrl");
+        imgToProcess.onerror = () => {
+          console.error("Failed to load image for flood fill from layer rasterDataUrl");
+          offscreenCtxRef.current = null;
+        }
         imgToProcess.src = dataURL;
+
       } else if (tool === 'pen' || tool === 'eraser') {
         isDrawing.current = true;
-        const updatedLayers = startPath(layers, activeLayerId, pos, tool, strokeColor, strokeWidth);
-        setLayers(updatedLayers);
+        prevPosRef.current = pos;
+
+        const img = new window.Image();
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
+
+          ctx.beginPath();
+          ctx.arc(pos.x, pos.y, strokeWidth / 2, 0, Math.PI * 2);
+          ctx.fillStyle = tool === 'pen' ? strokeColor : 'rgba(0,0,0,0)';
+          if (tool === 'eraser') {
+            ctx.globalCompositeOperation = 'destination-out';
+          } else {
+            ctx.globalCompositeOperation = 'source-over';
+          }
+          ctx.fill();
+          ctx.globalCompositeOperation = 'source-over';
+
+          const newDataUrl = offscreenCanvas.toDataURL();
+          setLayers(prevLayers =>
+            prevLayers.map(l =>
+              l.id === activeLayerId ? { ...l, rasterDataUrl: newDataUrl } : l
+            )
+          );
+        };
+        img.onerror = () => console.error("Failed to load image for drawing from layer rasterDataUrl");
+        img.src = currentActiveLayer.rasterDataUrl || '';
       }
     }
   }, [stageRef, layers, activeLayerId, tool, strokeColor, fillColor, tolerance, strokeWidth, setLayers]);
 
   const handleInteractionMove = useCallback((e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
-    if (!isDrawing.current || tool === 'bucket' || !activeLayerId) return;
+    if (!isDrawing.current || !activeLayerId || (tool !== 'pen' && tool !== 'eraser')) return;
 
     const stage = stageRef.current;
     const pos = getPointerPosition(stage);
-    if (!pos) return;
+    const ctx = offscreenCtxRef.current;
 
-    const updatedLayers = addPointToPath(layers, activeLayerId, pos);
-    setLayers(updatedLayers);
-  }, [layers, activeLayerId, tool, setLayers, stageRef]);
+    if (!pos || !ctx || !prevPosRef.current) return;
+
+    ctx.beginPath();
+    ctx.moveTo(prevPosRef.current.x, prevPosRef.current.y);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.lineWidth = strokeWidth;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    if (tool === 'pen') {
+      ctx.strokeStyle = strokeColor;
+      ctx.globalCompositeOperation = 'source-over';
+    } else if (tool === 'eraser') {
+      ctx.globalCompositeOperation = 'destination-out';
+    }
+    ctx.stroke();
+    ctx.globalCompositeOperation = 'source-over';
+
+    prevPosRef.current = pos;
+
+    const newDataUrl = ctx.canvas.toDataURL();
+    setLayers(prevLayers =>
+      prevLayers.map(l =>
+        l.id === activeLayerId ? { ...l, rasterDataUrl: newDataUrl } : l
+      )
+    );
+  }, [layers, activeLayerId, tool, strokeColor, strokeWidth, setLayers, stageRef]);
 
   const handleInteractionEnd = useCallback(() => {
-    if (tool !== 'bucket') {
+    if (tool === 'pen' || tool === 'eraser') {
       isDrawing.current = false;
+      prevPosRef.current = null;
+      offscreenCtxRef.current = null;
     }
   }, [tool]);
 

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import Toolbar, { Tool as ToolbarUITool } from '../../../components/canvas/toolbar';
 import { colorsMatch, performFloodFill, hexToRgba, getPointerPosition } from '@/lib/drawing';
 import LayersPanel from '@/components/canvas/layers';
+import HistoryControls from '@/components/canvas/history';
 import { useDrawingInteractions } from '@/hooks/use-interactions';
 import { UserLayerData, ToolbarTool } from '@/lib/types';
 import { Undo, Redo } from 'lucide-react';
@@ -230,6 +231,9 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
         } else {
           handleUndo();
         }
+      } else if (isModKey && event.key === 'y') {
+        event.preventDefault();
+        handleRedo();
       }
     };
 
@@ -239,13 +243,12 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
     };
   }, [handleUndo, handleRedo]);
 
+  const canUndo = currentHistoryIndex > 0;
+  const canRedo = currentHistoryIndex < history.length - 1;
+
   return (
     <div className="relative h-screen w-screen bg-gray-100 flex flex-col items-center justify-center">
-      <div className="flex items-center justify-start w-full p-4 absolute top-0 left-0 z-20">
-        {/* Placeholder for future top bar elements if any */}
-      </div>
-
-      <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+      <div className="absolute left-4 top-4 z-10">
         <Toolbar
           tool={tool}
           setTool={setTool}
@@ -298,7 +301,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
         </Stage>
       </div>
 
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10">
+      <div className="absolute right-4 top-4 z-10">
         <LayersPanel
           layers={layers}
           activeLayerId={activeLayerId}
@@ -310,27 +313,13 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
         <p className="mt-2 text-xs text-gray-500">Drawing ID: {props.id}</p>
       </div>
 
-      <div className="absolute bottom-4 left-4 z-10 flex space-x-2">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={handleUndo}
-          disabled={currentHistoryIndex <= 0}
-          title="Undo (Ctrl+Z)"
-          className="bg-background/80 hover:bg-background border-border"
-        >
-          <Undo className="h-5 w-5" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={handleRedo}
-          disabled={currentHistoryIndex >= history.length - 1}
-          title="Redo (Ctrl+Shift+Z)"
-          className="bg-background/80 hover:bg-background border-border"
-        >
-          <Redo className="h-5 w-5" />
-        </Button>
+      <div className="absolute bottom-4 left-4 z-10">
+        <HistoryControls
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          canUndo={canUndo}
+          canRedo={canRedo}
+        />
       </div>
     </div>
   );

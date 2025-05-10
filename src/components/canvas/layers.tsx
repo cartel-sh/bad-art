@@ -23,7 +23,7 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
   onDeleteLayer,
 }) => {
   return (
-    <div className="w-60 p-1 shadow-lg rounded-lg bg-secondary/20 border border-border flex flex-col space-y-2">
+    <div className="w-60 p-1 shadow-lg rounded-lg bg-secondary/20 border border-border flex flex-col gap-2">
       <div className="flex justify-between items-center mb-2">
         <h3 className="text-sm font-semibold text-primary-foreground">LAYERS</h3>
         <Button variant="ghost" size="icon" onClick={onAddLayer} title="Add New Layer" className="text-primary-foreground hover:text-accent-foreground h-7 w-7">
@@ -52,7 +52,7 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
               variant="ghost"
               size="icon"
               onClick={(e) => {
-                e.stopPropagation(); 
+                e.stopPropagation();
                 onToggleVisibility(layer.id);
               }}
               title={layer.isVisible ? 'Hide Layer' : 'Show Layer'}

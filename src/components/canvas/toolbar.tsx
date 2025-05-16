@@ -47,41 +47,41 @@ const Toolbar: React.FC<ToolbarProps> = ({
   }, [setFillColor, setStrokeColor]);
 
   return (
-    <div className="p-1 bg-secondary/10 shadow-lg rounded-lg border border-border flex flex-col gap-2 relative">
+    <div className="p-1 bg-secondary shadow-lg rounded-lg border border-border flex flex-col gap-2 relative">
       <div className="flex flex-col gap-1 items-center rounded-md">
         <Button
-          variant={tool === 'pen' ? 'secondary' : 'ghost'}
+          variant={tool === 'pen' ? 'outline' : 'secondary'}
           size="icon"
           onClick={() => setTool('pen')}
           title="Pen"
-          className={`w-10 h-10 ${tool !== 'pen' ? 'text-primary-foreground' : ''}`}
+          className="w-10 h-10 hover:bg-background"
         >
           <Pencil className="h-5 w-5" />
         </Button>
         <Button
-          variant={tool === 'eraser' ? 'secondary' : 'ghost'}
+          variant={tool === 'eraser' ? 'outline' : 'secondary'}
           size="icon"
           onClick={() => setTool('eraser')}
           title="Eraser"
-          className={`w-10 h-10 ${tool !== 'eraser' ? 'text-primary-foreground' : ''}`}
+          className="w-10 h-10 hover:bg-background"
         >
           <Eraser className="h-5 w-5" />
         </Button>
         <Button
-          variant={tool === 'bucket' ? 'secondary' : 'ghost'}
+          variant={tool === 'bucket' ? 'outline' : 'secondary'}
           size="icon"
           onClick={() => setTool('bucket')}
           title="Bucket"
-          className={`w-10 h-10 ${tool !== 'bucket' ? 'text-primary-foreground' : ''}`}
+          className="w-10 h-10 hover:bg-background"
         >
           <PaintBucket className="h-5 w-5" />
         </Button>
         <Button
-          variant={showColorPickerPopup ? 'secondary' : 'ghost'}
+          variant={showColorPickerPopup ? 'outline' : 'secondary'}
           size="icon"
           onClick={() => setShowColorPickerPopup(!showColorPickerPopup)}
           title="Select Color"
-          className={`w-10 h-10 ${!showColorPickerPopup ? 'text-primary-foreground' : ''}`}
+          className="w-10 h-10 hover:bg-background"
         >
           <div
             style={{

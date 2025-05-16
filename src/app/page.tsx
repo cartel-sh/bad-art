@@ -1,28 +1,23 @@
 import { Login } from "@/components/login";
-import { getLensClient } from "@/lib/lens/client";
-import { fetchAccount } from "@lens-protocol/client/actions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-async function getAuthenticatedAccount() {
-  const client = await getLensClient();
-
-  if (!client.isSessionClient()) {
-    return null;
-  }
-
-  const authenticatedUser = client.getAuthenticatedUser().unwrapOr(null);
-  if (!authenticatedUser) {
-    return null;
-  }
-
-  return fetchAccount(client, { address: authenticatedUser.address }).unwrapOr(null);
-}
+import UserMenu from "@/components/user-menu";
+import { DrawButton } from "@/components/draw-button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function Home() {
-  const account = await getAuthenticatedAccount();
+  const { getLensClient } = await import("@/lib/lens/client");
+  const { fetchAccount } = await import("@lens-protocol/client/actions");
 
-  if (!account) {
+  const client = await getLensClient();
+  let isAuthenticated = false;
+  if (client.isSessionClient()) {
+    const authenticatedUser = client.getAuthenticatedUser().unwrapOr(null);
+    if (authenticatedUser) {
+      isAuthenticated = true;
+    }
+  }
+
+  if (!isAuthenticated) {
     return (
       <div className="flex flex-col items-center justify-center">
         <Card className="w-full max-w-md">
@@ -39,21 +34,22 @@ export default async function Home() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center">
-      <Card className="w-full max-w-lg">
-        <CardHeader className="flex flex-row items-center gap-4">
-          <Avatar className="h-16 w-16">
-            <AvatarImage src={account.metadata?.picture} />
-            <AvatarFallback>{account.address.substring(0, 2).toUpperCase()}</AvatarFallback>
-          </Avatar>
-          <div>
-            <CardTitle className="text-xl">{account.metadata?.name}</CardTitle>
-            <CardDescription className="mt-1">
-              {account.address}
-            </CardDescription>
-          </div>
-        </CardHeader>
-      </Card>
+    <div className="flex w-full h-screen">
+      {/* Left Column */}
+      <div className="w-1/4 p-4 flex flex-col space-y-2">
+        <DrawButton />
+        <ThemeToggle />
+      </div>
+
+      {/* Center Column (Main) */}
+      <div className="flex-grow p-4">
+        <p>Center Column (Main)</p>
+      </div>
+
+      {/* Right Column */}
+      <div className="w-1/4 p-4 flex flex-col items-start h-full">
+        <UserMenu />
+      </div>
     </div>
   );
 }

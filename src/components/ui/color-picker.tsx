@@ -82,12 +82,18 @@ export const ColorPicker = ({
   // Update color when controlled value changes
   useEffect(() => {
     if (value) {
-      const color = Color.rgb(value).rgb().object();
+      const incomingColor = Color(value); // Use generic Color() constructor
 
-      setHue(color.r);
-      setSaturation(color.g);
-      setLightness(color.b);
-      setAlpha(color.a);
+      // Ensure values are numbers and not NaN, provide defaults if necessary
+      const newHue = incomingColor.hue();
+      const newSaturation = incomingColor.saturationl(); // For HSL model
+      const newLightness = incomingColor.lightness();
+      const newAlpha = incomingColor.alpha();
+
+      setHue(isNaN(newHue) ? 0 : newHue);
+      setSaturation(isNaN(newSaturation) ? 100 : newSaturation);
+      setLightness(isNaN(newLightness) ? 50 : newLightness);
+      setAlpha(isNaN(newAlpha) ? 100 : newAlpha * 100); // Context alpha is 0-100
     }
   }, [value]);
 

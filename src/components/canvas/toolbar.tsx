@@ -37,6 +37,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   setTolerance,
 }) => {
   const [showColorPickerPopup, setShowColorPickerPopup] = useState(false);
+  const [color, setColor] = useState(fillColor);
 
   const handleColorChange = useCallback((value: ColorLike) => {
     const colorObj = Color.rgb(value);
@@ -112,7 +113,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
         </div>
       )} */}
 
-      <ColorPicker onChange={handleColorChange} className="flex flex-col items-center justify-center gap-2 p-1 rounded-md">
+      <ColorPicker
+        value={color}
+        onChange={handleColorChange}
+        className="flex flex-col items-center justify-center gap-2 p-1 rounded-md">
+
         <div className="flex flex-col items-center justify-center h-32">
           <ColorPickerHue orientation="vertical" className="w-6 h-full flex items-center justify-center" />
         </div>
@@ -126,7 +131,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
             data-open={showColorPickerPopup}
           >
             <div
-              onChange={handleColorChange}
               className="max-w-sm rounded-md border bg-card/20 p-1 shadow-lg"
             >
               <ColorPickerSelection className="aspect-square w-full" />

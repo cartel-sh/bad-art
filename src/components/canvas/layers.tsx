@@ -30,10 +30,10 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
   mainCanvasHeight,
 }) => {
   return (
-    <div className="w-60 p-1 shadow-lg rounded-lg bg-secondary/20 border border-border flex flex-col gap-2">
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="text-sm font-semibold text-primary-foreground">LAYERS</h3>
-        <Button variant="ghost" size="icon" onClick={onAddLayer} title="Add New Layer" className="text-primary-foreground hover:text-accent-foreground h-7 w-7">
+    <div className="w-60 p-1 shadow-lg rounded-lg bg-background border border-border flex flex-col gap-2">
+      <div className="flex justify-between items-center">
+        <h3 className="text-sm px-2 py-1 font-semibold text-secondary-foreground">Layers</h3>
+        <Button variant="ghost" size="icon" onClick={onAddLayer} title="Add New Layer" className="text-secondary-foreground hover:text-accent-foreground h-7 w-7">
           <PlusSquare className="h-4 w-4" />
         </Button>
       </div>
@@ -42,7 +42,7 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
           <div
             key={layer.id}
             className={`flex items-center space-x-2 p-1.5 rounded-md border cursor-pointer hover:bg-secondary/30
-                        ${layer.id === activeLayerId ? 'bg-primary/20 border-primary shadow-inner' : 'border-border/70'}`}
+                        ${layer.id === activeLayerId ? 'bg-secondary/20 text-secondary-foreground border-secondary shadow-inner' : 'border-border/70'}`}
             onClick={() => onSetActiveLayer(layer.id)}
           >
             <div className="w-8 h-8 rounded border border-border/50 bg-secondary/30 flex items-center justify-center overflow-hidden">
@@ -55,10 +55,10 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
                   mainCanvasHeight={mainCanvasHeight}
                 />
               ) : (
-                <ImageOff className="w-4 h-4 text-primary-foreground/50" />
+                <ImageOff className="w-4 h-4 text-secondary-foreground/50" />
               )}
             </div>
-            <span className="flex-grow text-xs truncate text-primary-foreground/90" title={layer.name}>
+            <span className="flex-grow text-xs truncate text-secondary-foreground/90" title={layer.name}>
               {layer.name}
             </span>
             <Button

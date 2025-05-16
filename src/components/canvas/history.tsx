@@ -20,22 +20,22 @@ const HistoryControls: React.FC<HistoryControlsProps> = ({
   return (
     <div className="bg-secondary/10 rounded-md p-1 shadow-lg rounded-lg border border-border flex gap-1">
       <Button
-        variant="ghost"
+        variant="secondary"
         size="icon"
         onClick={onUndo}
         disabled={!canUndo}
         title="Undo (Ctrl+Z)"
-        className={`w-10 h-10 ${canUndo ? 'text-primary-foreground' : 'text-primary-foreground/50'}`}
+        className={`w-10 h-10 hover:bg-background`}
       >
         <Undo className="h-5 w-5" />
       </Button>
       <Button
-        variant="ghost"
+        variant="secondary"
         size="icon"
         onClick={onRedo}
         disabled={!canRedo}
         title="Redo (Ctrl+Shift+Z or Ctrl+Y)"
-        className={`w-10 h-10 ${canRedo ? 'text-primary-foreground' : 'text-primary-foreground/50'}`}
+        className={`w-10 h-10 hover:bg-background`}
       >
         <Redo className="h-5 w-5" />
       </Button>

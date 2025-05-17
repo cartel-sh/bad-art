@@ -13,6 +13,7 @@ import { UserLayerData, ToolbarTool } from '@/lib/types';
 import { Undo, Redo } from 'lucide-react';
 import { arrayMove } from '@dnd-kit/sortable';
 import AutoSave from '../../../components/canvas/auto-save';
+import PublishDialog from '@/components/canvas/publish-dialog';
 
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
@@ -40,6 +41,9 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   const [history, setHistory] = useState<UserLayerData[][]>([]);
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number>(-1);
   const [isLoadedFromStorage, setIsLoadedFromStorage] = useState<boolean>(false);
+
+  const [isPublishDialogOpen, setIsPublishDialogOpen] = useState<boolean>(false);
+  const [drawingTitle, setDrawingTitle] = useState<string>('');
 
   const MAX_HISTORY_LENGTH = 50;
   const ALL_DRAWINGS_STORAGE_KEY = 'drawings-storage';
@@ -292,6 +296,21 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
     });
   };
 
+  const handleOpenPublishDialog = () => {
+    const currentDrawingName = props.id ? `Drawing ${props.id}` : 'New Drawing';
+    setDrawingTitle(isLoadedFromStorage && layers[0]?.name ? layers[0].name : currentDrawingName);
+    setIsPublishDialogOpen(true);
+  };
+
+  const handleClosePublishDialog = () => {
+    setIsPublishDialogOpen(false);
+  };
+
+  const handlePublishDrawing = (title: string, imageDataUrl: string) => {
+    console.log('Publishing drawing:', title, imageDataUrl);
+    handleClosePublishDialog();
+  };
+
   return (
     <div className="relative h-screen w-screen bg-background/50 bg-foreground/50 flex flex-col items-center justify-center">
       <div className="absolute left-4 top-4 z-10">
@@ -394,6 +413,9 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
           canRedo={canRedo}
         />
       </div>
+      <div className="absolute bottom-4 right-4 z-10">
+        <Button variant="secondary" onClick={handleOpenPublishDialog}>Finish</Button>
+      </div>
       <AutoSave
         layers={layers}
         drawingId={props.id}
@@ -402,6 +424,14 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
         history={history}
         currentHistoryIndex={currentHistoryIndex}
         storageKey={ALL_DRAWINGS_STORAGE_KEY}
+      />
+      <PublishDialog
+        isOpen={isPublishDialogOpen}
+        onClose={handleClosePublishDialog}
+        stageRef={stageRef}
+        drawingTitle={drawingTitle}
+        onDrawingTitleChange={setDrawingTitle}
+        onPublish={handlePublishDrawing}
       />
     </div>
   );

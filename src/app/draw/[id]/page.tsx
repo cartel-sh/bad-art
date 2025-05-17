@@ -12,6 +12,7 @@ import { useDrawingInteractions } from '@/hooks/use-interactions';
 import { UserLayerData, ToolbarTool } from '@/lib/types';
 import { Undo, Redo } from 'lucide-react';
 import { arrayMove } from '@dnd-kit/sortable';
+import AutoSave from '../../../components/canvas/auto-save';
 
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
@@ -38,8 +39,10 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
 
   const [history, setHistory] = useState<UserLayerData[][]>([]);
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number>(-1);
+  const [isLoadedFromStorage, setIsLoadedFromStorage] = useState<boolean>(false);
 
   const MAX_HISTORY_LENGTH = 50;
+  const ALL_DRAWINGS_STORAGE_KEY = 'drawings-storage';
 
   const updateLayersAndHistory = useCallback((
     newLayersProvider: UserLayerData[] | ((prevState: UserLayerData[]) => UserLayerData[]),
@@ -81,6 +84,32 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   });
 
   useEffect(() => {
+    if (!props.id) return;
+
+    const drawingId = props.id;
+    const allSavedDrawingsJSON = localStorage.getItem(ALL_DRAWINGS_STORAGE_KEY);
+    let allDrawings: { [key: string]: UserLayerData[] } = {};
+
+    if (allSavedDrawingsJSON) {
+      try {
+        allDrawings = JSON.parse(allSavedDrawingsJSON);
+      } catch (error) {
+        console.error("Failed to parse all drawings from localStorage", error);
+      }
+    }
+
+    const savedLayersForCurrentDrawing = allDrawings[drawingId];
+
+    if (savedLayersForCurrentDrawing && savedLayersForCurrentDrawing.length > 0) {
+      setLayersInternal(savedLayersForCurrentDrawing);
+      setHistory([savedLayersForCurrentDrawing]);
+      setCurrentHistoryIndex(0);
+      setActiveLayerId(savedLayersForCurrentDrawing[savedLayersForCurrentDrawing.length - 1]?.id || null);
+      setIsLoadedFromStorage(true);
+      console.log(`Loaded drawing ${drawingId} from drawings-storage`);
+      return;
+    }
+
     const initialLayerId = `layer-${Date.now()}`;
     const offscreenCanvas = document.createElement('canvas');
     offscreenCanvas.width = CANVAS_WIDTH;
@@ -109,8 +138,8 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
     setHistory([[initialLayer]]);
     setCurrentHistoryIndex(0);
     setActiveLayerId(initialLayerId);
-
-  }, []);
+    setIsLoadedFromStorage(false);
+  }, [props.id]);
 
   useEffect(() => {
     const newImageElements: { [key: string]: HTMLImageElement } = {};
@@ -249,46 +278,15 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   const canRedo = currentHistoryIndex < history.length - 1;
 
   const handleReorderLayers = (activeId: string, overId: string | null) => {
-    if (!overId) return; // Should not happen if implemented correctly in LayersPanel
+    if (!overId) return;
 
     setLayersInternal(currentLayers => {
       const oldIndex = currentLayers.findIndex(layer => layer.id === activeId);
       const newIndex = currentLayers.findIndex(layer => layer.id === overId);
 
       if (oldIndex === -1 || newIndex === -1) {
-        return currentLayers; // Should not happen
+        return currentLayers;
       }
-
-      // Note: The layers are displayed in reverse order in LayersPanel.
-      // The `arrayMove` function expects indices based on the actual `layers` array order.
-      // We need to convert the visual indices (which correspond to the reversed list)
-      // to model indices (which correspond to the `layers` array).
-      // However, dnd-kit works with the IDs directly from the `SortableContext`
-      // items list (`layerIds`), which should match the `layers` state if `layerIds`
-      // is derived directly from `layers.map(l => l.id)`.
-      // The `LayersPanel` passes `active.id` and `over.id` which are the actual layer IDs.
-      // So, we find their indices in the *current* `layers` array.
-
-      // The visual order is reversed. If you drag item A (visually top) over item B (visually below A),
-      // in the actual `layers` array (which is the source of truth), B comes *before* A.
-      // When we reorder, we want A to come before B in the `layers` array to make A appear above B.
-
-      // Let's consider the desired final state based on IDs.
-      // activeId is the ID of the layer being dragged.
-      // overId is the ID of the layer it's dropped onto.
-      // In the UI, layers are shown .slice().reverse().
-      // If you drag layer X onto layer Y (X is now visually above Y):
-      // In the reversed list for display: ... Y, X, ...
-      // In the actual `layers` array, this means: ..., X, Y, ... (X should have a higher index than Y if we want X above Y visually, since it's reversed)
-      // NO, that's not right. The conventional display is top = low index.
-      // If `layers` is `[L1, L2, L3]`, visually it's `L3, L2, L1` (top to bottom).
-      // If I drag L1 (visually bottom) to be on top of L3 (visually top):
-      // New visual: L1, L3, L2.
-      // New actual `layers` array: `[L2, L3, L1]`.
-      // So, if I drag `activeId` to be visually *above* `overId`:
-      // In the `layers` array, `activeId` should end up at the index *after* `overId` if `activeId` was originally *before* `overId`.
-      // Or at the index *of* `overId` if `activeId` was originally *after* `overId`.
-      // This is standard array reordering logic. `arrayMove` handles this.
 
       return arrayMove(currentLayers, oldIndex, newIndex);
     });
@@ -396,6 +394,15 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
           canRedo={canRedo}
         />
       </div>
+      <AutoSave
+        layers={layers}
+        drawingId={props.id}
+        isLoadedFromStorage={isLoadedFromStorage}
+        setIsLoadedFromStorage={setIsLoadedFromStorage}
+        history={history}
+        currentHistoryIndex={currentHistoryIndex}
+        storageKey={ALL_DRAWINGS_STORAGE_KEY}
+      />
     </div>
   );
 } 

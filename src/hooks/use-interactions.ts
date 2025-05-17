@@ -2,6 +2,7 @@ import { useRef, useCallback, useEffect } from 'react';
 import Konva from 'konva';
 import { v4 as uuidv4 } from 'uuid';
 import Color from 'color';
+import { toast } from 'sonner';
 import {
   getPointerPosition,
   colorsMatch,
@@ -142,7 +143,7 @@ export const useDrawingInteractions = ({
 
         const targetLayer = stage.findOne<Konva.Layer>('#' + activeLayerId);
         if (!targetLayer) {
-          console.error(`Drawing layer with ID '#${activeLayerId}' not found on stage.`);
+          toast.error("Layer is hidden", {duration: 500, position: "top-center"});
           isDrawing.current = false;
           return;
         }

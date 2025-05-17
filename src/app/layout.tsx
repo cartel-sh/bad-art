@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { Toaster } from 'sonner';
 import "../../public/globals.css";
 
 const geistSans = Geist({
@@ -23,9 +24,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased m-0 p-0 overflow-hidden`}>
         <Providers>
-          <div>
+          <>
+            <Toaster />
             {children}
-          </div>
+          </>
         </Providers>
       </body>
     </html>

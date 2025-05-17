@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Konva from 'konva';
 import { toast } from 'sonner';
+import GlareCard from '../effects/glare-card';
 
 interface PublishDialogProps {
   isOpen: boolean;
@@ -24,7 +25,6 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
 }) => {
   const [imageDataUrl, setImageDataUrl] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const imageRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     if (isOpen && stageRef.current) {
@@ -42,27 +42,6 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
       onPublish(drawingTitle, imageDataUrl);
     }
   };
-
-  useEffect(() => {
-    if (imageRef.current) {
-      const img = imageRef.current;
-      const handleLoad = () => {
-        console.log('Image loaded, dimensions:', img.naturalWidth, img.naturalHeight);
-      };
-      const handleError = () => {
-        toast.error('Failed to load image preview.', {duration: 500, position: "top-center"});
-        console.error('Failed to load image preview.');
-      };
-
-      img.addEventListener('load', handleLoad);
-      img.addEventListener('error', handleError);
-
-      return () => {
-        img.removeEventListener('load', handleLoad);
-        img.removeEventListener('error', handleError);
-      };
-    }
-  }, [imageDataUrl]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -86,11 +65,9 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
           <div className="flex justify-center items-center border rounded-md aspect-square overflow-hidden bg-gray-100">
             {isGenerating && <p>Generating preview...</p>}
             {!isGenerating && imageDataUrl && (
-              <img
-                ref={imageRef}
-                src={imageDataUrl}
-                alt="Drawing Preview"
-                className="max-w-full max-h-full object-contain"
+              <GlareCard
+                imageUrl={imageDataUrl}
+                altText="Drawing Preview"
               />
             )}
             {!isGenerating && !imageDataUrl && <p>No preview available.</p>}

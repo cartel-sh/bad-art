@@ -18,7 +18,7 @@ const HistoryControls: React.FC<HistoryControlsProps> = ({
   canRedo
 }) => {
   return (
-    <div className="bg-secondary/10 rounded-md p-1 shadow-lg rounded-lg border border-border flex gap-1">
+    <div className="bg-secondary rounded-md p-1 shadow-lg rounded-lg border border-border flex gap-1">
       <Button
         variant="secondary"
         size="icon"

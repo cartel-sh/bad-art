@@ -11,6 +11,7 @@ import HistoryControls from '@/components/canvas/history';
 import { useDrawingInteractions } from '@/hooks/use-interactions';
 import { UserLayerData, ToolbarTool } from '@/lib/types';
 import { Undo, Redo } from 'lucide-react';
+import { arrayMove } from '@dnd-kit/sortable';
 
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
@@ -247,8 +248,54 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   const canUndo = currentHistoryIndex > 0;
   const canRedo = currentHistoryIndex < history.length - 1;
 
+  const handleReorderLayers = (activeId: string, overId: string | null) => {
+    if (!overId) return; // Should not happen if implemented correctly in LayersPanel
+
+    setLayersInternal(currentLayers => {
+      const oldIndex = currentLayers.findIndex(layer => layer.id === activeId);
+      const newIndex = currentLayers.findIndex(layer => layer.id === overId);
+
+      if (oldIndex === -1 || newIndex === -1) {
+        return currentLayers; // Should not happen
+      }
+
+      // Note: The layers are displayed in reverse order in LayersPanel.
+      // The `arrayMove` function expects indices based on the actual `layers` array order.
+      // We need to convert the visual indices (which correspond to the reversed list)
+      // to model indices (which correspond to the `layers` array).
+      // However, dnd-kit works with the IDs directly from the `SortableContext`
+      // items list (`layerIds`), which should match the `layers` state if `layerIds`
+      // is derived directly from `layers.map(l => l.id)`.
+      // The `LayersPanel` passes `active.id` and `over.id` which are the actual layer IDs.
+      // So, we find their indices in the *current* `layers` array.
+
+      // The visual order is reversed. If you drag item A (visually top) over item B (visually below A),
+      // in the actual `layers` array (which is the source of truth), B comes *before* A.
+      // When we reorder, we want A to come before B in the `layers` array to make A appear above B.
+
+      // Let's consider the desired final state based on IDs.
+      // activeId is the ID of the layer being dragged.
+      // overId is the ID of the layer it's dropped onto.
+      // In the UI, layers are shown .slice().reverse().
+      // If you drag layer X onto layer Y (X is now visually above Y):
+      // In the reversed list for display: ... Y, X, ...
+      // In the actual `layers` array, this means: ..., X, Y, ... (X should have a higher index than Y if we want X above Y visually, since it's reversed)
+      // NO, that's not right. The conventional display is top = low index.
+      // If `layers` is `[L1, L2, L3]`, visually it's `L3, L2, L1` (top to bottom).
+      // If I drag L1 (visually bottom) to be on top of L3 (visually top):
+      // New visual: L1, L3, L2.
+      // New actual `layers` array: `[L2, L3, L1]`.
+      // So, if I drag `activeId` to be visually *above* `overId`:
+      // In the `layers` array, `activeId` should end up at the index *after* `overId` if `activeId` was originally *before* `overId`.
+      // Or at the index *of* `overId` if `activeId` was originally *after* `overId`.
+      // This is standard array reordering logic. `arrayMove` handles this.
+
+      return arrayMove(currentLayers, oldIndex, newIndex);
+    });
+  };
+
   return (
-    <div className="relative h-screen w-screen bg-gray-100 flex flex-col items-center justify-center">
+    <div className="relative h-screen w-screen bg-background/50 bg-foreground/50 flex flex-col items-center justify-center">
       <div className="absolute left-4 top-4 z-10">
         <Toolbar
           tool={tool}
@@ -261,7 +308,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
         />
       </div>
 
-      <div className="flex items-center justify-center border border-gray-300 rounded-md bg-gray-200 shadow-lg">
+      <div className="flex items-center justify-center border border-border rounded-md shadow-lg">
         <Stage
           width={CANVAS_WIDTH}
           height={CANVAS_HEIGHT}
@@ -336,6 +383,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
           onToggleVisibility={handleToggleLayerVisibility}
           onAddLayer={handleAddLayer}
           onDeleteLayer={handleDeleteLayer}
+          onReorderLayers={handleReorderLayers}
         />
         <p className="mt-2 text-xs text-gray-500">Drawing ID: {props.id}</p>
       </div>

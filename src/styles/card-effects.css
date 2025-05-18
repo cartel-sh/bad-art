@@ -11,6 +11,7 @@
   --posx: 50%;
   --posy: 50%;
   --hyp: 0;
+  --perspective-distance: 900px;
 }
 
 .card {
@@ -24,6 +25,8 @@
   place-items: center;
   position: relative;
   /* Needed for shine/glare absolute positioning */
+  overflow: visible;
+  /* Allow rotated content to show outside bounds */
 }
 
 .card.interacting {
@@ -38,7 +41,8 @@
 .card__translater,
 .card__rotator {
   display: grid;
-  perspective: 600px;
+  perspective: var(--perspective-distance);
+  /* Use CSS variable */
   transform-origin: center;
   will-change: transform;
   width: 100%;
@@ -59,7 +63,9 @@
   box-shadow: 0px 10px 20px -5px black;
   border-radius: var(--radius);
   outline: none;
-  transition: box-shadow 0.4s ease, outline 0.2s ease;
+  transition: transform 0.2s ease-out, box-shadow 0.4s ease, outline 0.2s ease;
+  background-color: transparent;
+  /* Ensure transparent background */
 }
 
 .card.active .card__rotator {
@@ -89,12 +95,14 @@
 .card__image-container {
   grid-area: 1/1;
   border-radius: var(--radius);
-  overflow: hidden;
-  /* Ensure image respects border radius */
+  /* overflow: hidden; */
+  /* Removed to prevent clipping on rotation */
   position: relative;
   /* For shine/glare absolute positioning */
   width: 100%;
   height: 100%;
+  background-color: transparent;
+  /* Ensure transparent background */
 }
 
 .card__image-container img {
@@ -143,6 +151,8 @@
   /* So it doesn't interfere with mouse events on the card */
   z-index: 1;
   /* Ensure it's above the image */
+  opacity: var(--o);
+  transition: opacity 0.2s ease-out;
 }
 
 
@@ -270,6 +280,7 @@
   background-size: 100% 100%, 200% 200%, 237% 237%, 195% 195%, 120% 120%;
 
   filter: brightness(calc((var(--hyp) + 0.7) * 0.7)) contrast(3.2) saturate(0.66);
+  transition: filter 0.2s ease-out;
 }
 
 /* Generic Glare Effect - can be applied with a class like .glare-effect */
@@ -321,6 +332,7 @@
 
   filter: brightness(0.75) contrast(1.2) saturate(1.5);
   mix-blend-mode: color-dodge;
+  transition: filter 0.2s ease-out, background-position 0.1s linear;
 }
 
 

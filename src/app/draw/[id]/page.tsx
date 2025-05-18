@@ -43,7 +43,6 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   const [isLoadedFromStorage, setIsLoadedFromStorage] = useState<boolean>(false);
 
   const [isPublishDialogOpen, setIsPublishDialogOpen] = useState<boolean>(false);
-  const [drawingTitle, setDrawingTitle] = useState<string>('');
 
   const MAX_HISTORY_LENGTH = 50;
   const ALL_DRAWINGS_STORAGE_KEY = 'drawings-storage';
@@ -297,8 +296,6 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   };
 
   const handleOpenPublishDialog = () => {
-    const currentDrawingName = props.id ? `Drawing ${props.id}` : 'New Drawing';
-    setDrawingTitle(isLoadedFromStorage && layers[0]?.name ? layers[0].name : currentDrawingName);
     setIsPublishDialogOpen(true);
   };
 
@@ -306,8 +303,8 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
     setIsPublishDialogOpen(false);
   };
 
-  const handlePublishDrawing = (title: string, imageDataUrl: string) => {
-    console.log('Publishing drawing:', title, imageDataUrl);
+  const handlePublishDrawing = (imageDataUrl: string) => {
+    console.log('Publishing drawing:', imageDataUrl);
     handleClosePublishDialog();
   };
 
@@ -429,8 +426,6 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
         isOpen={isPublishDialogOpen}
         onClose={handleClosePublishDialog}
         stageRef={stageRef}
-        drawingTitle={drawingTitle}
-        onDrawingTitleChange={setDrawingTitle}
         onPublish={handlePublishDrawing}
       />
     </div>

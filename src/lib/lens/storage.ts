@@ -1,5 +1,6 @@
 import { IStorageProvider } from "@lens-protocol/client";
 import { deleteCookie, getCookie, setCookie } from "cookies-next";
+import { StorageClient } from "@lens-chain/storage-client";
 
 const MAX_AGE = 30 * 24 * 60 * 60;
 
@@ -33,3 +34,6 @@ export const clientCookieStorage: IStorageProvider = {
     deleteCookie(key, { maxAge: 0 });
   },
 };
+
+
+export const storageClient = StorageClient.create();

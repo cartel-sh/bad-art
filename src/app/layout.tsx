@@ -25,7 +25,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased m-0 p-0 overflow-hidden`}>
         <Providers>
           <>
-            <Toaster />
+            <Toaster position="top-center" />
             {children}
           </>
         </Providers>

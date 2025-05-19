@@ -1,14 +1,12 @@
 import { Login } from "@/components/login";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import UserMenu from "@/components/user-menu";
 import { DrawButton } from "@/components/draw-button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { SessionClient } from "@lens-protocol/client";
 import { Feed } from "@/components/feed";
+import Sidebar from "@/components/sidebar";
+import { getLensClient } from "@/lib/lens/client";
 
 export default async function Home() {
-  const { getLensClient } = await import("@/lib/lens/client");
-  const { fetchAccount } = await import("@lens-protocol/client/actions");
 
   const client = await getLensClient();
   let isAuthenticated = false;
@@ -44,13 +42,9 @@ export default async function Home() {
         <Feed />
       </div>
 
-      <div className="w-72 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 p-4 flex flex-col space-y-4">
-        <div className="mb-auto">
-          <UserMenu />
-        </div>
+      <Sidebar>
         <DrawButton />
-        <ThemeToggle />
-      </div>
+      </Sidebar>
     </div>
   );
 }

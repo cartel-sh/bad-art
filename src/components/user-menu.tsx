@@ -1,6 +1,11 @@
+"use client";
+
 import { getLensClient } from "@/lib/lens/client";
 import { fetchAccount } from "@lens-protocol/client/actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useEffect } from "react";
+import { useState } from "react";
+import { Account } from "@lens-protocol/client";
 
 async function getAuthenticatedAccount() {
   const client = await getLensClient();
@@ -17,8 +22,12 @@ async function getAuthenticatedAccount() {
   return fetchAccount(client, { address: authenticatedUser.address }).unwrapOr(null);
 }
 
-export default async function UserMenu() {
-  const account = await getAuthenticatedAccount();
+export default function UserMenu() {
+  const [account, setAccount] = useState<Account | null>(null);
+
+  useEffect(() => {
+    getAuthenticatedAccount().then(setAccount);
+  }, []);
 
   if (!account) {
     return null;

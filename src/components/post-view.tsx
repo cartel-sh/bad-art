@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import GlareCard from "./effects/glare-card";
 
 interface PostViewProps {
   post: Post;
@@ -22,6 +23,10 @@ export default function PostView({ post, imageMetadata, resolvedUrl, imageAlt }:
     }
   };
 
+  if (!resolvedUrl) {
+    return <div>Image not available.</div>;
+  }
+
   return (
     <div
       className="w-full bg-background flex items-center justify-center relative h-screen"
@@ -35,16 +40,15 @@ export default function PostView({ post, imageMetadata, resolvedUrl, imageAlt }:
           <ArrowLeft size={18} />
         </motion.button>
       </Link>
-      {resolvedUrl ? (
-        <motion.img
-          layoutId={`image-${post.id}`}
-          src={resolvedUrl}
-          alt={imageAlt}
-          className="max-h-full max-w-full object-contain"
-        />
-      ) : (
-        <p className="text-white">Image not available.</p>
-      )}
+      <motion.div
+        layoutId={`${post.id}`}
+        className="w-96 h-96 flex items-center justify-center"
+        initial={{ opacity: 0, scale: 0.5 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <GlareCard imageUrl={resolvedUrl} altText={imageAlt} />
+      </motion.div>
     </div>
   );
 } 

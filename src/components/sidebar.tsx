@@ -4,6 +4,9 @@ import { Post, ImageMetadata } from "@lens-protocol/client";
 import UserMenu from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import React from "react";
+import { Heart, MessageCircle, Repeat } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { resolveUrl } from "@/lib/resolve-url";
 
 interface SidebarProps {
   post?: Post;
@@ -11,7 +14,36 @@ interface SidebarProps {
   children?: React.ReactNode;
 }
 
+const formatTimeAgo = (timestamp?: string): string => {
+  if (!timestamp) return "";
+  const now = new Date();
+  const secondsPast = Math.floor((now.getTime() - new Date(timestamp).getTime()) / 1000);
+
+  if (secondsPast < 0) {
+    return "just now";
+  }
+  if (secondsPast < 10) {
+    return "now";
+  }
+  if (secondsPast < 60) {
+    return `${secondsPast}s`;
+  }
+  const minutesPast = Math.floor(secondsPast / 60);
+  if (minutesPast < 60) {
+    return `${minutesPast}m`;
+  }
+  const hoursPast = Math.floor(minutesPast / 60);
+  if (hoursPast < 24) {
+    return `${hoursPast}h`;
+  }
+  const daysPast = Math.floor(hoursPast / 24);
+  return `${daysPast}d`;
+};
+
 export default function Sidebar({ post, imageMetadata, children }: SidebarProps) {
+  const authorPictureRaw = post?.author.metadata?.picture;
+  const authorDisplayName = post?.author.metadata?.name || post?.author.username?.localName || post?.author.address.substring(0, 6);
+
   return (
     <div className="w-96 flex-shrink-0 bg-background p-4 flex flex-col space-y-4 h-screen">
       <div className="mb-auto space-y-4">
@@ -20,15 +52,42 @@ export default function Sidebar({ post, imageMetadata, children }: SidebarProps)
           <ThemeToggle />
         </div>
         {post && imageMetadata && (
-          <div>
-            <h2 className="text-xl font-semibold mb-3">{imageMetadata.title || "Untitled Image"}</h2>
+          <div className="pt-4">
+            {post.author && (
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={resolveUrl(authorPictureRaw) || undefined} />
+                    <AvatarFallback>{authorDisplayName?.substring(0, 2).toUpperCase() || "A"}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm font-medium">{authorDisplayName}</p>
+                  </div>
+                </div>
+                <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                  {formatTimeAgo(post.timestamp)}
+                </span>
+              </div>
+            )}
+
+            {imageMetadata.title && (
+              <h2 className="text-2xl font-bold mb-3">{imageMetadata.title}</h2>
+            )}
             {imageMetadata.content && <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{imageMetadata.content}</p>}
 
-            <div className="mt-4 space-y-1 text-xs text-gray-500 dark:text-gray-400">
-              <h3 className="font-medium text-sm text-gray-700 dark:text-gray-300 mb-1">Details</h3>
-              {post.author.username?.localName && <p><strong>Author:</strong> {post.author.username.localName}</p>}
-              <p><strong>Posted:</strong> {new Date(post.timestamp).toLocaleDateString()}</p>
-              {post.id && <p><strong>Post ID:</strong> {post.id}</p>}
+            <div className="mt-6 flex justify-around items-center text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-center space-x-1.5">
+                <Heart size={20} />
+                <span>{post.stats.upvotes}</span>
+              </div>
+              <div className="flex items-center space-x-1.5">
+                <Repeat size={20} />
+                <span>{post.stats.reposts}</span>
+              </div>
+              <div className="flex items-center space-x-1.5">
+                <MessageCircle size={20} />
+                <span>{post.stats.comments}</span>
+              </div>
             </div>
           </div>
         )}

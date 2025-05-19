@@ -166,7 +166,7 @@ export function Feed() {
           return (
             <Link key={post.id} href={`/p/${post.slug}`} passHref>
               <motion.div
-                layoutId={`image-${post.id}`}
+                layoutId={`${post.id}`}
                 className="block bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-shadow duration-300 ease-in-out aspect-[1/1]"
               >
                 <img

@@ -3,6 +3,9 @@
 import { Post, ImageMetadata } from "@lens-protocol/client";
 import { motion } from "motion/react";
 import { resolveUrl } from "@/lib/resolve-url";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 interface PostViewProps {
   post: Post;
@@ -12,9 +15,28 @@ interface PostViewProps {
 }
 
 export default function PostView({ post, imageMetadata, resolvedUrl, imageAlt }: PostViewProps) {
+  const router = useRouter();
+
+  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) {
+      router.push("/?from=postview");
+    }
+  };
+
   return (
     <div className="flex h-screen">
-      <div className="w-4/5 bg-black flex items-center justify-center">
+      <div
+        className="w-4/5 bg-black flex items-center justify-center relative"
+        onClick={handleBackdropClick}
+      >
+        <Link href="/?from=postview" passHref>
+          <motion.button
+            className="absolute top-4 left-4 z-10 p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 transition-colors"
+            aria-label="Go back to feed"
+          >
+            <ArrowLeft size={24} />
+          </motion.button>
+        </Link>
         {resolvedUrl ? (
           <motion.img
             layoutId={`image-${post.id}`}

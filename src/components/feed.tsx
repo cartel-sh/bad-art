@@ -7,16 +7,65 @@ import { fetchPosts } from "@lens-protocol/client/actions";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
+import { useSearchParams, useRouter } from 'next/navigation';
+import { SkeletonCard } from "./post-skeleton";
 
 const APP = process.env.NEXT_PUBLIC_APP_ADDRESS;
 
+const SESSION_STORAGE_KEY_POSTS = 'feedPosts';
+const SESSION_STORAGE_KEY_CURSOR = 'feedCursor';
+const SESSION_STORAGE_KEY_HAS_MORE = 'feedHasMore';
+
 export function Feed() {
   const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
+  useEffect(() => {
+    const fromPostView = searchParams.get('from') === 'postview';
+
+    if (fromPostView && typeof window !== 'undefined') {
+      const cachedPostsJSON = sessionStorage.getItem(SESSION_STORAGE_KEY_POSTS);
+      const cachedCursor = sessionStorage.getItem(SESSION_STORAGE_KEY_CURSOR);
+      const cachedHasMore = sessionStorage.getItem(SESSION_STORAGE_KEY_HAS_MORE);
+
+      if (cachedPostsJSON) {
+        try {
+          const cachedPosts = JSON.parse(cachedPostsJSON);
+          if (cachedPosts && cachedPosts.length > 0) {
+            setPosts(cachedPosts);
+            setCursor(cachedCursor === 'null' || !cachedCursor ? undefined : cachedCursor);
+            setHasMore(cachedHasMore === 'true');
+            setLoading(false);
+
+            const currentPath = window.location.pathname;
+            router.replace(currentPath, { scroll: false });
+            return;
+          }
+        } catch (e) {
+          console.error("Failed to parse cached posts from sessionStorage", e);
+          sessionStorage.removeItem(SESSION_STORAGE_KEY_POSTS);
+          sessionStorage.removeItem(SESSION_STORAGE_KEY_CURSOR);
+          sessionStorage.removeItem(SESSION_STORAGE_KEY_HAS_MORE);
+        }
+      }
+    }
+    fetchContent();
+  }, [searchParams, router]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (posts.length > 0) {
+        sessionStorage.setItem(SESSION_STORAGE_KEY_POSTS, JSON.stringify(posts));
+        sessionStorage.setItem(SESSION_STORAGE_KEY_CURSOR, cursor || 'null');
+        sessionStorage.setItem(SESSION_STORAGE_KEY_HAS_MORE, hasMore.toString());
+      }
+    }
+  }, [posts, cursor, hasMore]);
 
   const fetchContent = async (currentCursor?: string) => {
     if (!APP) {
@@ -26,7 +75,9 @@ export function Feed() {
       return;
     }
 
-    setLoading(true);
+    if (!currentCursor) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
@@ -48,8 +99,9 @@ export function Feed() {
 
         setPosts(prevPosts => currentCursor ? [...prevPosts, ...imagePosts] : [...imagePosts]);
 
-        if (result.value.pageInfo.next) {
-          setCursor(result.value.pageInfo.next);
+        const nextCursor = result.value.pageInfo.next;
+        if (nextCursor) {
+          setCursor(nextCursor);
           setHasMore(true);
         } else {
           setCursor(undefined);
@@ -69,28 +121,35 @@ export function Feed() {
     }
   };
 
-  useEffect(() => {
-    fetchContent();
-  }, []);
-
   const loadMorePosts = () => {
     if (hasMore && cursor && !loading) {
       fetchContent(cursor);
     }
   };
 
-  if (!APP && !loading) {
+  if (!APP && !loading && posts.length === 0) {
     return <p className="text-red-500 p-4 text-center">Error: App EVM address is not configured. Please set NEXT_PUBLIC_APP_EVM_ADDRESS in your .env.local file.</p>;
   }
 
   if (loading && posts.length === 0 && !error) {
-    return <p className="p-4 text-center">Loading awesome images...</p>;
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <SkeletonCard key={index} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (error && posts.length === 0) {
     return <p className="text-red-500 p-4 text-center">Error fetching posts: {error}</p>;
   }
 
+  if (posts.length === 0 && !loading && !error) {
+    return <p className="p-4 text-center">No images found. Try posting some!</p>;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -102,7 +161,7 @@ export function Feed() {
 
           const imageUrl = post.metadata.image.item
           const resolvedUrl = resolveUrl(imageUrl)
-          const imageAlt = post.metadata.image.altTag ?? undefined
+          const imageAlt = post.metadata.image.altTag ?? post.id;
 
           return (
             <Link key={post.id} href={`/p/${post.slug}`} passHref>
@@ -120,21 +179,16 @@ export function Feed() {
           );
         })}
       </div>
-      {loading && (
-        <p className="text-center mt-8 text-gray-600 dark:text-gray-400">Loading more images...</p>
-      )}
       {!loading && hasMore && posts.length > 0 && (
         <div className="flex justify-center mt-10 mb-6">
           <button
             onClick={loadMorePosts}
-            className="px-8 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75"
+            disabled={loading}
+            className="px-8 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 disabled:opacity-50"
           >
-            Load More Images
+            {loading ? "Loading..." : "Load More Images"}
           </button>
         </div>
-      )}
-      {!loading && !hasMore && posts.length > 0 && (
-        <p className="text-center mt-10 mb-6 text-gray-500 dark:text-gray-400">You've reached the end of the image feed!</p>
       )}
     </div>
   );

@@ -1,9 +1,6 @@
 "use client";
 
 import { Post, ImageMetadata } from "@lens-protocol/client";
-import UserMenu from "@/components/user-menu";
-import { ThemeToggle } from "@/components/theme-toggle";
-import React from "react";
 import { Heart, MessageCircle, Repeat } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { resolveUrl } from "@/lib/resolve-url";
@@ -11,7 +8,6 @@ import { resolveUrl } from "@/lib/resolve-url";
 interface SidebarProps {
   post?: Post;
   imageMetadata?: ImageMetadata;
-  children?: React.ReactNode;
 }
 
 const formatTimeAgo = (timestamp?: string): string => {
@@ -40,17 +36,13 @@ const formatTimeAgo = (timestamp?: string): string => {
   return `${daysPast}d`;
 };
 
-export default function Sidebar({ post, imageMetadata, children }: SidebarProps) {
+export default function Sidebar({ post, imageMetadata }: SidebarProps) {
   const authorPictureRaw = post?.author.metadata?.picture;
   const authorDisplayName = post?.author.metadata?.name || post?.author.username?.localName || post?.author.address.substring(0, 6);
 
   return (
     <div className="w-96 flex-shrink-0 bg-background p-4 flex flex-col space-y-4 h-screen">
       <div className="mb-auto space-y-4">
-        <div className="flex justify-between items-center">
-          <UserMenu />
-          <ThemeToggle />
-        </div>
         {post && imageMetadata && (
           <div className="pt-4">
             {post.author && (
@@ -91,7 +83,6 @@ export default function Sidebar({ post, imageMetadata, children }: SidebarProps)
             </div>
           </div>
         )}
-        {children}
       </div>
     </div>
   );

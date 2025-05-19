@@ -5,6 +5,7 @@ import { SessionClient } from "@lens-protocol/client";
 import { Feed } from "@/components/feed";
 import Sidebar from "@/components/sidebar";
 import { getLensClient } from "@/lib/lens/client";
+import GlobalMenu from "@/components/global-menu";
 
 export default async function Home() {
 
@@ -38,13 +39,11 @@ export default async function Home() {
 
   return (
     <div className="flex w-full h-screen">
-      <div className="flex-grow p-4 overflow-y-auto">
+
+      <div className="flex-grow p-4 mx-auto max-w-screen-md overflow-y-auto">
         <Feed />
       </div>
 
-      <Sidebar>
-        <DrawButton />
-      </Sidebar>
     </div>
   );
 }

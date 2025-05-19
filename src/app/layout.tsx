@@ -3,6 +3,7 @@ import { Providers } from "@/components/providers";
 import { Toaster } from 'sonner';
 import "../../public/globals.css";
 import { AccountProvider } from "@/contexts/account-context";
+import GlobalMenu from "@/components/global-menu";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,6 +28,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <Providers>
           <>
             <Toaster position="top-center" />
+            <GlobalMenu />
             {children}
           </>
         </Providers>

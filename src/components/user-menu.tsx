@@ -8,7 +8,7 @@ export default function UserMenu() {
   const { account, loading } = useAccount();
 
   if (loading) {
-    return <div className="h-10 w-10 rounded-full bg-gray-200 animate-pulse" />;
+    return <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />;
   }
 
   if (!account) {
@@ -19,14 +19,14 @@ export default function UserMenu() {
   const displayName = account.metadata?.name || account.username?.localName || account.address.substring(0, 6);
 
   return (
-    <div className="flex items-center gap-2">
-      <Avatar className="h-10 w-10">
+    <div className="flex items-center justify-center gap-2 w-10 h-10">
+      <Avatar className="h-8 w-8">
         <AvatarImage src={pictureUrl || undefined} />
         <AvatarFallback>{account.address.substring(0, 2).toUpperCase()}</AvatarFallback>
       </Avatar>
-      <div>
+      {/* <div>
         <p className="text-sm font-medium">{displayName}</p>
-      </div>
+      </div> */}
     </div>
   );
 } 

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { PlusIcon } from "lucide-react";
 
 const adjectives = [
   "Sparkling", "Cosmic", "Mystic", "Pixelated", "Dreamy",
@@ -40,8 +41,8 @@ export function DrawButton() {
   };
 
   return (
-    <Button className="w-full" onClick={handleDrawClick} variant="default" size="default">
-      Draw
+    <Button className="w-10 h-10" onClick={handleDrawClick} variant="secondary" size="default">
+      <PlusIcon strokeWidth={3} className="w-4 h-4" />
     </Button>
   );
 } 

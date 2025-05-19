@@ -1,11 +1,8 @@
 import { Login } from "@/components/login";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DrawButton } from "@/components/draw-button";
 import { SessionClient } from "@lens-protocol/client";
 import { Feed } from "@/components/feed";
-import Sidebar from "@/components/sidebar";
 import { getLensClient } from "@/lib/lens/client";
-import GlobalMenu from "@/components/global-menu";
 
 export default async function Home() {
 

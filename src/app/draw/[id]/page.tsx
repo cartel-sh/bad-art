@@ -309,7 +309,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   };
 
   return (
-    <div className="relative h-screen w-screen bg-background/50 bg-foreground/50 flex flex-col items-center justify-center">
+    <div className="relative h-screen w-screen bg-background flex flex-col items-center justify-center">
       <div className="absolute left-4 top-4 z-10">
         <Toolbar
           tool={tool}

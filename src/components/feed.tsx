@@ -2,70 +2,50 @@
 
 import { getLensClient } from "@/lib/lens/client";
 import { resolveUrl } from "@/lib/resolve-url";
-import { AnyPost, evmAddress, MainContentFocus, Post, PostType, SessionClient } from "@lens-protocol/client";
+import { AnyPost, MainContentFocus, Post, PostType } from "@lens-protocol/client";
 import { fetchPosts } from "@lens-protocol/client/actions";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { useSearchParams, useRouter } from 'next/navigation';
 import { SkeletonCard } from "./post-skeleton";
+import { useFeed } from "@/contexts/feed-context";
 
 const APP = process.env.NEXT_PUBLIC_APP_ADDRESS;
 
-const SESSION_STORAGE_KEY_POSTS = 'feedPosts';
-const SESSION_STORAGE_KEY_CURSOR = 'feedCursor';
-const SESSION_STORAGE_KEY_HAS_MORE = 'feedHasMore';
-
 export function Feed() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [cursor, setCursor] = useState<string | undefined>(undefined);
-  const [hasMore, setHasMore] = useState(true);
+  const {
+    posts,
+    cursor,
+    hasMore,
+    loading,
+    error,
+    setPosts,
+    setCursor,
+    setHasMore,
+    setLoading,
+    setError,
+    addPosts,
+    clearFeed
+  } = useFeed();
   const searchParams = useSearchParams();
   const router = useRouter();
 
   useEffect(() => {
     const fromPostView = searchParams.get('from') === 'postview';
 
-    if (fromPostView && typeof window !== 'undefined') {
-      const cachedPostsJSON = sessionStorage.getItem(SESSION_STORAGE_KEY_POSTS);
-      const cachedCursor = sessionStorage.getItem(SESSION_STORAGE_KEY_CURSOR);
-      const cachedHasMore = sessionStorage.getItem(SESSION_STORAGE_KEY_HAS_MORE);
-
-      if (cachedPostsJSON) {
-        try {
-          const cachedPosts = JSON.parse(cachedPostsJSON);
-          if (cachedPosts && cachedPosts.length > 0) {
-            setPosts(cachedPosts);
-            setCursor(cachedCursor === 'null' || !cachedCursor ? undefined : cachedCursor);
-            setHasMore(cachedHasMore === 'true');
-            setLoading(false);
-
-            const currentPath = window.location.pathname;
-            router.replace(currentPath, { scroll: false });
-            return;
-          }
-        } catch (e) {
-          console.error("Failed to parse cached posts from sessionStorage", e);
-          sessionStorage.removeItem(SESSION_STORAGE_KEY_POSTS);
-          sessionStorage.removeItem(SESSION_STORAGE_KEY_CURSOR);
-          sessionStorage.removeItem(SESSION_STORAGE_KEY_HAS_MORE);
-        }
-      }
+    if (fromPostView && posts.length > 0) {
+      const currentPath = window.location.pathname;
+      router.replace(currentPath, { scroll: false });
+      setLoading(false);
+      return;
     }
-    fetchContent();
+    if (posts.length === 0) {
+      fetchContent();
+    } else {
+      setLoading(false);
+    }
   }, [searchParams, router]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if (posts.length > 0) {
-        sessionStorage.setItem(SESSION_STORAGE_KEY_POSTS, JSON.stringify(posts));
-        sessionStorage.setItem(SESSION_STORAGE_KEY_CURSOR, cursor || 'null');
-        sessionStorage.setItem(SESSION_STORAGE_KEY_HAS_MORE, hasMore.toString());
-      }
-    }
-  }, [posts, cursor, hasMore]);
 
   const fetchContent = async (currentCursor?: string) => {
     if (!APP) {
@@ -76,6 +56,8 @@ export function Feed() {
     }
 
     if (!currentCursor) {
+      setLoading(true);
+    } else {
       setLoading(true);
     }
     setError(null);
@@ -97,7 +79,11 @@ export function Feed() {
         const fetchedItems = result.value.items;
         const imagePosts = fetchedItems.map((post: AnyPost) => post as Post);
 
-        setPosts(prevPosts => currentCursor ? [...prevPosts, ...imagePosts] : [...imagePosts]);
+        if (currentCursor) {
+          addPosts(imagePosts);
+        } else {
+          setPosts(imagePosts);
+        }
 
         const nextCursor = result.value.pageInfo.next;
         if (nextCursor) {
@@ -186,8 +172,13 @@ export function Feed() {
             disabled={loading}
             className="px-8 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 disabled:opacity-50"
           >
-            {loading ? "Loading..." : "Load More Images"}
+            Load More Images
           </button>
+        </div>
+      )}
+      {loading && posts.length > 0 && (
+        <div className="flex justify-center mt-10 mb-6">
+          <p>Loading more images...</p>
         </div>
       )}
     </div>

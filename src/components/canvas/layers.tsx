@@ -23,6 +23,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { ScrollArea, ScrollAreaViewport, ScrollAreaScrollbar, ScrollAreaThumb } from '@radix-ui/react-scroll-area';
 
 export interface LayersPanelProps {
   layers: UserLayerData[];
@@ -191,23 +192,30 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
               <PlusSquare className="h-4 w-4" />
             </Button>
           </div>
-          <div
-            className={`space-y-1 max-h-96 pr-1 ${isDraggingList ? 'overflow-hidden' : 'overflow-auto'}`}
-          >
-            {layers.slice().reverse().map((layer) => (
-              <LayerItem
-                key={layer.id}
-                layer={layer}
-                activeLayerId={activeLayerId}
-                onSetActiveLayer={onSetActiveLayer}
-                onToggleVisibility={onToggleVisibility}
-                onDeleteLayer={onDeleteLayer}
-                canDelete={layers.length > 1}
-                mainCanvasWidth={mainCanvasWidth}
-                mainCanvasHeight={mainCanvasHeight}
-                isDraggingOveral={isDraggingList}
-              />
-            ))}
+          <div>
+            <ScrollArea className="">
+              <ScrollAreaViewport className="max-h-64 overflow-auto w-full h-full pr-2 rounded">
+                <div className="flex flex-col gap-1 p-0.5">
+                  {layers.slice().reverse().map((layer) => (
+                    <LayerItem
+                      key={layer.id}
+                      layer={layer}
+                      activeLayerId={activeLayerId}
+                      onSetActiveLayer={onSetActiveLayer}
+                      onToggleVisibility={onToggleVisibility}
+                      onDeleteLayer={onDeleteLayer}
+                      canDelete={layers.length > 1}
+                      mainCanvasWidth={mainCanvasWidth}
+                      mainCanvasHeight={mainCanvasHeight}
+                      isDraggingOveral={isDraggingList}
+                    />
+                  ))}
+                </div>
+              </ScrollAreaViewport>
+              <ScrollAreaScrollbar orientation="vertical" className="flex select-none touch-none p-0.5 bg-transparent transition-colors duration-[160ms] ease-out data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2.5">
+                <ScrollAreaThumb className="flex-1 bg-border rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px]" />
+              </ScrollAreaScrollbar>
+            </ScrollArea>
           </div>
         </div>
       </SortableContext>

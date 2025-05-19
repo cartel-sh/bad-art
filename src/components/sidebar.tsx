@@ -7,7 +7,7 @@ import { resolveUrl } from "@/lib/resolve-url";
 
 interface SidebarProps {
   post?: Post;
-  imageMetadata?: ImageMetadata;
+  metadata?: ImageMetadata;
 }
 
 const formatTimeAgo = (timestamp?: string): string => {
@@ -36,14 +36,15 @@ const formatTimeAgo = (timestamp?: string): string => {
   return `${daysPast}d`;
 };
 
-export default function Sidebar({ post, imageMetadata }: SidebarProps) {
+export default function Sidebar({ post }: SidebarProps) {
+  const metadata = post?.metadata as ImageMetadata;
   const authorPictureRaw = post?.author.metadata?.picture;
   const authorDisplayName = post?.author.metadata?.name || post?.author.username?.localName || post?.author.address.substring(0, 6);
 
   return (
     <div className="w-96 flex-shrink-0 bg-background p-4 flex flex-col space-y-4 h-screen">
       <div className="mb-auto space-y-4">
-        {post && imageMetadata && (
+        {post && metadata && (
           <div className="pt-4">
             {post.author && (
               <div className="flex items-center justify-between gap-2 mb-3">
@@ -62,10 +63,10 @@ export default function Sidebar({ post, imageMetadata }: SidebarProps) {
               </div>
             )}
 
-            {imageMetadata.title && (
-              <h2 className="text-2xl font-bold mb-3">{imageMetadata.title}</h2>
+            {metadata.title && (
+              <h2 className="text-2xl font-bold mb-3">{metadata.title}</h2>
             )}
-            {imageMetadata.content && <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{imageMetadata.content}</p>}
+            {metadata.content && <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{metadata.content}</p>}
 
             <div className="mt-6 flex justify-around items-center text-sm text-gray-600 dark:text-gray-400">
               <div className="flex items-center space-x-1.5">

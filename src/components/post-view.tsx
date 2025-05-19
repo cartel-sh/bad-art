@@ -6,16 +6,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import GlareCard from "./effects/glare-card";
+import { resolveUrl } from "@/lib/resolve-url";
 
-interface PostViewProps {
-  post: Post;
-  imageMetadata: ImageMetadata;
-  resolvedUrl: string | undefined;
-  imageAlt: string;
-}
-
-export default function PostView({ post, imageMetadata, resolvedUrl, imageAlt }: PostViewProps) {
+export default function PostView({ post }: { post: Post }) {
   const router = useRouter();
+  const metadata = post.metadata as ImageMetadata;
+  const imageUrl = metadata.image?.item;
+  const resolvedUrl = imageUrl ? resolveUrl(imageUrl) : undefined;
+  const imageAlt = metadata.image?.altTag ?? "Post image";
 
   const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) {
@@ -29,7 +27,7 @@ export default function PostView({ post, imageMetadata, resolvedUrl, imageAlt }:
 
   return (
     <div
-      className="w-full bg-background flex items-center justify-center relative h-screen"
+      className="w-full z-[100] bg-background flex items-center justify-center relative h-screen overflow-visible"
       onClick={handleBackdropClick}
     >
       <Link href="/?from=postview" passHref>
@@ -42,7 +40,7 @@ export default function PostView({ post, imageMetadata, resolvedUrl, imageAlt }:
       </Link>
       <motion.div
         layoutId={`${post.id}`}
-        className="w-96 h-96 flex items-center justify-center"
+        className="w-[65%] h-auto flex items-center justify-center"
         initial={{ opacity: 0, scale: 0.5 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}

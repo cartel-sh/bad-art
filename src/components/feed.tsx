@@ -1,9 +1,12 @@
 "use client";
 
 import { getLensClient } from "@/lib/lens/client";
+import { resolveUrl } from "@/lib/resolve-url";
 import { AnyPost, evmAddress, MainContentFocus, Post, PostType, SessionClient } from "@lens-protocol/client";
 import { fetchPosts } from "@lens-protocol/client/actions";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { motion } from "motion/react";
 
 const APP = process.env.NEXT_PUBLIC_APP_ADDRESS;
 
@@ -98,15 +101,22 @@ export function Feed() {
           }
 
           const imageUrl = post.metadata.image.item
+          const resolvedUrl = resolveUrl(imageUrl)
+          const imageAlt = post.metadata.image.altTag ?? undefined
 
           return (
-            <div key={post.id} className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-shadow duration-300 ease-in-out aspect-[1/1]">
-              <img
-                src={imageUrl.replace(/^ipfs:\/\//, 'https://ipfs.io/ipfs/')}
-                // alt={imageAlt || 'Lens Protocol Image Post'}
-                className="w-full h-full object-cover cursor-pointer"
-              />
-            </div>
+            <Link key={post.id} href={`/p/${post.slug}`} passHref>
+              <motion.div
+                layoutId={`image-${post.id}`}
+                className="block bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-shadow duration-300 ease-in-out aspect-[1/1]"
+              >
+                <img
+                  src={resolvedUrl}
+                  alt={imageAlt}
+                  className="w-full h-full object-cover"
+                />
+              </motion.div>
+            </Link>
           );
         })}
       </div>

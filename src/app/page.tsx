@@ -40,17 +40,16 @@ export default async function Home() {
 
   return (
     <div className="flex w-full h-screen">
-      <div className="w-1/4 p-4 flex flex-col space-y-2">
-        <DrawButton />
-        <ThemeToggle />
-      </div>
-
-      <div className="flex-grow p-4">
+      <div className="flex-grow p-4 overflow-y-auto">
         <Feed />
       </div>
 
-      <div className="w-1/4 p-4 flex flex-col items-start h-full">
-        <UserMenu />
+      <div className="w-72 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 p-4 flex flex-col space-y-4">
+        <div className="mb-auto">
+          <UserMenu />
+        </div>
+        <DrawButton />
+        <ThemeToggle />
       </div>
     </div>
   );

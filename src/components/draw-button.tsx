@@ -40,7 +40,7 @@ export function DrawButton() {
   };
 
   return (
-    <Button onClick={handleDrawClick} variant="default" size="default">
+    <Button className="w-full" onClick={handleDrawClick} variant="default" size="default">
       Draw
     </Button>
   );

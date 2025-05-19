@@ -13,9 +13,12 @@ interface SidebarProps {
 
 export default function Sidebar({ post, imageMetadata, children }: SidebarProps) {
   return (
-    <div className="w-96 flex-shrink-0 border-l border-border bg-background p-4 flex flex-col space-y-4 h-screen">
+    <div className="w-96 flex-shrink-0 bg-background p-4 flex flex-col space-y-4 h-screen">
       <div className="mb-auto space-y-4">
-        <UserMenu />
+        <div className="flex justify-between items-center">
+          <UserMenu />
+          <ThemeToggle />
+        </div>
         {post && imageMetadata && (
           <div>
             <h2 className="text-xl font-semibold mb-3">{imageMetadata.title || "Untitled Image"}</h2>
@@ -31,7 +34,6 @@ export default function Sidebar({ post, imageMetadata, children }: SidebarProps)
         )}
         {children}
       </div>
-      <ThemeToggle />
     </div>
   );
 } 

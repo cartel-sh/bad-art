@@ -7,7 +7,7 @@ import Konva from 'konva';
 import React, { useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { useWalletClient } from 'wagmi';
-import GlareCard from '../effects/glare-card';
+import GlareCard, { ShineEffect } from '../effects/glare-card';
 import { storageClient } from '@/lib/lens/storage';
 import { MainContentFocus } from '@lens-protocol/client';
 import { post } from '@lens-protocol/client/actions';
@@ -182,6 +182,7 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
               <GlareCard
                 imageUrl={imageDataUrl}
                 altText="Drawing Preview"
+                shineEffect={ShineEffect.None}
               />
             )}
             {!isGenerating && !imageDataUrl && <p>No preview available.</p>}

@@ -17,6 +17,7 @@ export function Login() {
         {({ isConnected: isWalletConnected, show, truncatedAddress, ensName, chain }) => {
           const connectKitDisplayName = ensName ?? truncatedAddress;
 
+          console.log(isWalletConnected, authenticatedUser, showAccountSelector);
           if (!isWalletConnected) {
             return (
               <>

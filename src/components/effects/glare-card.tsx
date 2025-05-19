@@ -1,6 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import '../../styles/card-effects.css';
 
+export enum ShineEffect {
+  Holo = 'holo-effect',
+  Crimson = 'crimson-shine-effect',
+  GalaxyHolo = 'galaxy-holo-effect',
+  None = ''
+}
+
 interface InteractiveImageProps {
   imageUrl: string;
   altText: string;
@@ -10,6 +17,7 @@ interface InteractiveImageProps {
   width?: string | number;
   height?: string | number;
   effectClasses?: string;
+  shineEffect?: ShineEffect;
 }
 
 const GlareCard: React.FC<InteractiveImageProps> = ({
@@ -20,7 +28,8 @@ const GlareCard: React.FC<InteractiveImageProps> = ({
   imageClassName = '',
   width = '100%',
   height = '100%',
-  effectClasses = 'holo-effect glare-effect',
+  effectClasses = 'glare-effect',
+  shineEffect = ShineEffect.Holo,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -97,7 +106,7 @@ const GlareCard: React.FC<InteractiveImageProps> = ({
     <div className={containerClassName} style={{ width, height }}>
       <div
         ref={cardRef}
-        className={`card mouse-effects-enabled ${effectClasses} ${cardClassName}`.trim()}
+        className={`card mouse-effects-enabled ${shineEffect} ${effectClasses} ${cardClassName}`.trim()}
         style={{ width: '100%', height: '100%' }}
       >
         <div className="card__translater w-full h-full">

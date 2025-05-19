@@ -335,6 +335,20 @@
   transition: filter 0.2s ease-out, background-position 0.1s linear;
 }
 
+/* Crimson Shine Effect */
+.crimson-shine-effect .card__shine {
+  background-image: radial-gradient(farthest-corner circle at var(--mx) var(--my),
+      rgba(255, 50, 50, 0.8) 0%,
+      /* Crimson highlight */
+      rgba(200, 0, 0, 0.2) 30%,
+      /* Deeper red */
+      rgba(0, 0, 0, 0.6) 90%
+      /* Dark edge */
+    );
+  mix-blend-mode: color-dodge;
+  /* Or screen, lighten, etc. */
+  filter: brightness(0.8) contrast(1.5) saturate(1.8);
+}
 
 /* Add more simplified effect classes here as needed */
 

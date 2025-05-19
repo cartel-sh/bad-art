@@ -10,6 +10,7 @@ import { createConfig, http, WagmiProvider } from "wagmi";
 import { ThemeProvider } from "next-themes";
 import { AccountProvider } from "@/contexts/account-context";
 import { FeedProvider } from "@/contexts/feed-context";
+import { AnimatePresence } from "motion/react";
 
 const wagmiConfig = createConfig(
   getDefaultConfig({
@@ -36,9 +37,11 @@ export const Providers = ({ children }: { children: JSX.Element }) => {
         <QueryClientProvider client={queryClient}>
           <ConnectKitProvider>
             <LensProvider client={publicClient}>
-              <AccountProvider>
-                <FeedProvider>{children}</FeedProvider>
-              </AccountProvider>
+              <AnimatePresence>
+                <AccountProvider>
+                  <FeedProvider>{children}</FeedProvider>
+                </AccountProvider>
+              </AnimatePresence>
             </LensProvider>
           </ConnectKitProvider>
         </QueryClientProvider>

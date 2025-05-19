@@ -143,7 +143,7 @@ export const useDrawingInteractions = ({
 
         const targetLayer = stage.findOne<Konva.Layer>('#' + activeLayerId);
         if (!targetLayer) {
-          toast.error("Layer is hidden", {duration: 500, position: "top-center"});
+          toast.error("Layer is hidden", { duration: 500, position: "top-center" });
           isDrawing.current = false;
           return;
         }

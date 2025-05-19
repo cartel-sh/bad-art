@@ -4,6 +4,7 @@ import { Post, ImageMetadata } from "@lens-protocol/client";
 import { Heart, MessageCircle, Repeat } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { resolveUrl } from "@/lib/resolve-url";
+import { motion } from "motion/react";
 
 interface SidebarProps {
   post?: Post;
@@ -42,7 +43,13 @@ export default function Sidebar({ post }: SidebarProps) {
   const authorDisplayName = post?.author.metadata?.name || post?.author.username?.localName || post?.author.address.substring(0, 6);
 
   return (
-    <div className="w-96 flex-shrink-0 bg-background p-4 flex flex-col space-y-4 h-screen">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 50 }}
+      className="w-96 flex-shrink-0 bg-background drop-shadow-lg drop-shadow-black/20 shadow-black/20 p-8 flex flex-col space-y-4 h-screen"
+    >
       <div className="mb-auto space-y-4">
         {post && metadata && (
           <div className="pt-4">
@@ -85,6 +92,6 @@ export default function Sidebar({ post }: SidebarProps) {
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 } 

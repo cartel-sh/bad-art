@@ -1,46 +1,31 @@
 "use client";
 
-import { getLensClient } from "@/lib/lens/client";
-import { fetchAccount } from "@lens-protocol/client/actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useEffect } from "react";
-import { useState } from "react";
-import { Account } from "@lens-protocol/client";
-
-async function getAuthenticatedAccount() {
-  const client = await getLensClient();
-
-  if (!client.isSessionClient()) {
-    return null;
-  }
-
-  const authenticatedUser = client.getAuthenticatedUser().unwrapOr(null);
-  if (!authenticatedUser) {
-    return null;
-  }
-
-  return fetchAccount(client, { address: authenticatedUser.address }).unwrapOr(null);
-}
+import { useAccount } from "@/contexts/account-context";
+import { resolveUrl } from "@/lib/resolve-url";
 
 export default function UserMenu() {
-  const [account, setAccount] = useState<Account | null>(null);
+  const { account, loading } = useAccount();
 
-  useEffect(() => {
-    getAuthenticatedAccount().then(setAccount);
-  }, []);
+  if (loading) {
+    return <div className="h-10 w-10 rounded-full bg-gray-200 animate-pulse" />;
+  }
 
   if (!account) {
     return null;
   }
 
+  const pictureUrl = resolveUrl(account.metadata?.picture)
+  const displayName = account.metadata?.name || account.username?.localName || account.address.substring(0, 6);
+
   return (
     <div className="flex items-center gap-2">
       <Avatar className="h-10 w-10">
-        <AvatarImage src={account.metadata?.picture} />
+        <AvatarImage src={pictureUrl || undefined} />
         <AvatarFallback>{account.address.substring(0, 2).toUpperCase()}</AvatarFallback>
       </Avatar>
       <div>
-        <p className="text-sm font-medium">{account.metadata?.name || account.username?.localName || account.address.substring(0, 6)}</p>
+        <p className="text-sm font-medium">{displayName}</p>
       </div>
     </div>
   );

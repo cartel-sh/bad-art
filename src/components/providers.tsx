@@ -8,6 +8,7 @@ import { ConnectKitProvider, getDefaultConfig } from "connectkit";
 import { JSX } from "react";
 import { createConfig, http, WagmiProvider } from "wagmi";
 import { ThemeProvider } from "next-themes";
+import { AccountProvider } from "@/contexts/account-context";
 
 const wagmiConfig = createConfig(
   getDefaultConfig({
@@ -33,7 +34,11 @@ export const Providers = ({ children }: { children: JSX.Element }) => {
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
           <ConnectKitProvider>
-            <LensProvider client={publicClient}>{children}</LensProvider>
+            <LensProvider client={publicClient}>
+              <AccountProvider>
+                {children}
+              </AccountProvider>
+            </LensProvider>
           </ConnectKitProvider>
         </QueryClientProvider>
       </WagmiProvider>

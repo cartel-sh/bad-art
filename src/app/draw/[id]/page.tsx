@@ -14,6 +14,7 @@ import { Undo, Redo } from 'lucide-react';
 import { arrayMove } from '@dnd-kit/sortable';
 import AutoSave from '../../../components/canvas/auto-save';
 import PublishDialog from '@/components/canvas/publish-dialog';
+import { motion } from 'motion/react';
 
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
@@ -310,7 +311,12 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
 
   return (
     <div className="relative h-screen w-screen bg-background flex flex-col items-center justify-center">
-      <div className="absolute left-4 top-4 z-10">
+      <motion.div
+        className="absolute left-4 top-4 z-10"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <Toolbar
           tool={tool}
           setTool={setTool}
@@ -320,7 +326,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
           tolerance={tolerance}
           setTolerance={setTolerance}
         />
-      </div>
+      </motion.div>
 
       <div className="flex items-center justify-center border border-border rounded-md shadow-lg">
         <Stage
@@ -387,7 +393,12 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
         </Stage>
       </div>
 
-      <div className="absolute right-4 top-4 z-10">
+      <motion.div
+        className="absolute right-4 top-4 z-10"
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
         <LayersPanel
           mainCanvasWidth={CANVAS_WIDTH}
           mainCanvasHeight={CANVAS_HEIGHT}
@@ -399,19 +410,29 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
           onDeleteLayer={handleDeleteLayer}
           onReorderLayers={handleReorderLayers}
         />
-      </div>
+      </motion.div>
 
-      <div className="absolute bottom-4 left-4 z-10">
+      <motion.div
+        className="absolute bottom-4 left-4 z-10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+      >
         <HistoryControls
           onUndo={handleUndo}
           onRedo={handleRedo}
           canUndo={canUndo}
           canRedo={canRedo}
         />
-      </div>
-      <div className="absolute bottom-4 right-4 z-10">
+      </motion.div>
+      <motion.div
+        className="absolute bottom-4 right-4 z-10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.3 }}
+      >
         <Button variant="secondary" onClick={handleOpenPublishDialog}>Finish</Button>
-      </div>
+      </motion.div>
       <AutoSave
         layers={layers}
         drawingId={props.id}

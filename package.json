@@ -93,5 +93,6 @@
     "@types/react-dom": "^19.1.2",
     "tailwindcss": "^4.1.4",
     "typescript": "^5.8.3"
-  }
+  },
+  "packageManager": "bun@1.2.5"
 }

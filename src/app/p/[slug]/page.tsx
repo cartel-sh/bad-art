@@ -6,8 +6,9 @@ import PostView from "@/components/post-view";
 import AuthorInfo from "@/components/author-info";
 import PostInteractions from "@/components/post-interactions";
 
-export default async function PostPage({ params }: { params: { slug: string } }) {
-  const slug = params.slug;
+export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = await params;
+  const slug = resolvedParams.slug;
 
   let post: Post | null = null;
   let error: string | null = null;

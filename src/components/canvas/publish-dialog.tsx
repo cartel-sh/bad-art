@@ -9,10 +9,11 @@ import { toast } from 'sonner';
 import { useWalletClient } from 'wagmi';
 import GlareCard, { ShineEffect } from '../effects/glare-card';
 import { storageClient } from '@/lib/lens/storage';
-import { MainContentFocus } from '@lens-protocol/client';
-import { post } from '@lens-protocol/client/actions';
+import { MainContentFocus, SessionClient } from '@lens-protocol/client';
+import { fetchPost, post } from '@lens-protocol/client/actions';
 import { handleOperationWith } from '@lens-protocol/client/viem';
 import { ConnectKitButton } from 'connectkit';
+import { useRouter } from 'next/navigation';
 
 const dataURLtoFile = (dataurl: string, filename: string): File | null => {
   const arr = dataurl.split(',');
@@ -51,6 +52,7 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
   const [drawingTitle, setDrawingTitle] = useState<string>('');
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
   const { data: walletClient } = useWalletClient();
+  const router = useRouter();
 
   useEffect(() => {
     console.log(imageDataUrl, isPublishing, walletClient)
@@ -77,26 +79,25 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
 
     setIsPublishing(true);
 
+    const toastId = toast.loading('Starting publication process...');
+
     try {
       const file = dataURLtoFile(imageDataUrl, drawingTitle || 'drawing.png');
       if (!file) {
-        toast.error('Failed to convert image data to file');
+        toast.error('Failed to convert image data to file', { id: toastId });
         setIsPublishing(false);
         return;
       }
 
-      // Get the session client
       const client = await getLensClient();
       if (!client || !client.isSessionClient) {
-        toast.error('Failed to get lens client - you must be logged in');
+        toast.error('Failed to get lens client - you must be logged in', { id: toastId });
         setIsPublishing(false);
         return;
       }
 
-      // Upload the folder with the image and metadata
-      toast.info('Uploading your drawing...');
+      toast.loading('Uploading your drawing...', { id: toastId });
 
-      // Use uploadFile to simplify the process
       const { uri } = await storageClient.uploadFile(file);
       console.log('Uploaded image to grove storage:', uri);
 
@@ -121,38 +122,42 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
       const metadataFile = new File([JSON.stringify(metadata)], 'metadata.json', { type: 'application/json' });
       const { uri: contentUri } = await storageClient.uploadFile(metadataFile);
 
-      toast.success('Drawing uploaded successfully!');
+      toast.loading('Creating post on Lens...', { id: toastId });
       console.log('Uploaded metadata to grove storage:', contentUri);
 
-      toast.info('Creating post on Lens...');
-
       try {
-        if (!client || !client.isSessionClient) {
+        if (!client || !client.isSessionClient()) {
           return
         }
 
         const result = await post(client as any, {
           contentUri,
-        }).andThen(handleOperationWith(walletClient));
+        })
+          .andThen(handleOperationWith(walletClient))
+          .andThen((client).waitForTransaction)
+          .andThen((txHash) => fetchPost(client, { txHash }))
 
         if (result.isOk()) {
-          const txHash = result.value;
-          console.log('Post created successfully with tx hash:', txHash);
+          console.log('Post created successfully with tx hash:', result.value);
 
-          toast.success('Drawing published to Lens!');
-          onPublish(contentUri);
+          toast.success('Drawing published successfully!', { id: toastId });
+
+          onPublish(result.value?.slug || '');
+
+          router.push(`/p/${result.value?.slug}`);
           onClose();
+
         } else {
           console.error('Failed to create post:', result.error);
-          toast.error(`Failed to publish: ${String(result.error)}`);
+          toast.error(`Failed to publish: ${String(result.error)}`, { id: toastId });
         }
       } catch (error) {
         console.error('Error in post function:', error);
-        toast.error(`Error in post function: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        toast.error(`Error in post function: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: toastId });
       }
     } catch (error) {
       console.error('Error publishing drawing:', error);
-      toast.error(`Error publishing: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Error publishing: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: toastId });
     } finally {
       setIsPublishing(false);
     }

@@ -6,25 +6,21 @@ import { useAuthenticatedUser } from "@lens-protocol/react";
 import { ConnectKitButton } from "connectkit";
 import { useState } from "react";
 import { AccountSelector } from "./accounts";
+import { Loader2Icon, LogInIcon, User2Icon } from "lucide-react";
 
 export function Login() {
-  const [showAccountSelector, setShowAccountSelector] = useState(false);
+  const [showAccountSelector, setShowAccountSelector] = useState(true);
   const { data: authenticatedUser, loading: authUserLoading } = useAuthenticatedUser();
 
   return (
-    <div className="p-2 space-y-2 mb-2">
+    <div className="">
       <ConnectKitButton.Custom>
         {({ isConnected: isWalletConnected, show, truncatedAddress, ensName, chain }) => {
-          const connectKitDisplayName = ensName ?? truncatedAddress;
-
-          console.log(isWalletConnected, authenticatedUser, showAccountSelector);
           if (!isWalletConnected) {
             return (
-              <>
-                <Button onClick={show} className="w-full">
-                  Connect Wallet
-                </Button>
-              </>
+              <Button onClick={show} variant="ghost" className="w-full">
+                <LogInIcon className="w-4 h-4 " strokeWidth={3} />
+              </Button>
             );
           }
 
@@ -35,7 +31,9 @@ export function Login() {
                 onOpenChange={setShowAccountSelector}
                 trigger={
                   <DialogTrigger asChild>
-                    <Button className="w-full">Sign in with Lens</Button>
+                    <Button variant="ghost" className="w-full">
+                      <User2Icon className="w-4 h-4 " strokeWidth={3} />
+                    </Button>
                   </DialogTrigger>
                 }
               />
@@ -43,17 +41,11 @@ export function Login() {
           }
 
           if (isWalletConnected && authenticatedUser) {
-            const displayIdentity = connectKitDisplayName ?? "...";
-            return (
-              <div className="flex items-center gap-2 text-sm w-full justify-between">
-                <span className="text-muted-foreground truncate" title={authenticatedUser.address}>
-                  Signed in as: <span className="text-primary font-semibold">{displayIdentity}</span>
-                </span>
-              </div>
-            );
+            return null
           }
 
-          return <p className="text-xs text-muted-foreground">Checking status...</p>;
+
+          return <p className="text-xs text-muted-foreground"><Loader2Icon className="w-4 h-4 animate-spin" /></p>;
         }}
       </ConnectKitButton.Custom>
     </div>

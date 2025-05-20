@@ -303,10 +303,10 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
     setIsPublishDialogOpen(false);
   };
 
-  const handlePublishDrawing = (imageDataUrl: string) => {
-    console.log('Publishing drawing:', imageDataUrl);
+  const handlePublishDrawing = (slug: string) => {
+    console.log('Publishing drawing:', slug);
     handleClosePublishDialog();
-  };
+  }
 
   return (
     <div className="relative h-screen w-screen bg-background flex flex-col items-center justify-center">

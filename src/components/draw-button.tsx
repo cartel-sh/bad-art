@@ -8,12 +8,22 @@ const adjectives = [
   "Sparkling", "Cosmic", "Mystic", "Pixelated", "Dreamy",
   "Vibrant", "Lunar", "Solar", "Retro", "Futuristic",
   "Whimsical", "Abstract", "Geometric", "Surreal", "Playful",
+  "Majestic", "Enchanted", "Celestial", "Galactic", "Ethereal",
+  "Cybernetic", "Chromatic", "Holographic", "Quantum", "Mythic",
+  "Neon", "Primal", "Astral", "Iridescent", "Arcane",
+  "Prismatic", "Luminous", "Spectral", "Twilight", "Radiant",
+  "Glitched", "Hypnotic", "Crystalline", "Digital", "Psychedelic",
 ];
 
 const animals = [
   "Phoenix", "Griffin", "Dragon", "Sphinx", "Pegasus",
   "Kraken", "Hydra", "Basilisk", "Cerberus", "Chimera",
   "Robot", "Alien", "Stardust", "Nebula", "Comet",
+  "Unicorn", "Wyvern", "Gorgon", "Minotaur", "Cyclops",
+  "Gryphon", "Manticore", "Leviathan", "Roc", "Fenrir",
+  "Behemoth", "Banshee", "Titan", "Centaur", "Djinn",
+  "Gargoyle", "Nymph", "Wraith", "Triton", "Harpy",
+  "Golem", "Specter", "Kelpie", "Siren", "Automaton",
 ];
 
 const generateRandomString = (length: number): string => {

@@ -72,7 +72,7 @@ export function AccountSelector({
         onSuccess(selectedAccount);
       }
 
-      router.refresh();
+      window.location.reload();
     } catch (error) {
       console.error("Lens authentication failed:", error);
     }

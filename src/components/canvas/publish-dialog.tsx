@@ -12,6 +12,7 @@ import { storageClient } from '@/lib/lens/storage';
 import { MainContentFocus } from '@lens-protocol/client';
 import { post } from '@lens-protocol/client/actions';
 import { handleOperationWith } from '@lens-protocol/client/viem';
+import { ConnectKitButton } from 'connectkit';
 
 const dataURLtoFile = (dataurl: string, filename: string): File | null => {
   const arr = dataurl.split(',');
@@ -52,9 +53,10 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
   const { data: walletClient } = useWalletClient();
 
   useEffect(() => {
+    console.log(imageDataUrl, isPublishing, walletClient)
     if (isOpen && stageRef.current) {
       setIsGenerating(true);
-      const dataUrl = stageRef.current.toDataURL({ mimeType: 'image/jpeg' });
+      const dataUrl = stageRef.current.toDataURL({ mimeType: 'image/png' });
       setImageDataUrl(dataUrl);
       setIsGenerating(false);
     } else {
@@ -76,8 +78,7 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
     setIsPublishing(true);
 
     try {
-      // Convert data URL to File
-      const file = dataURLtoFile(imageDataUrl, drawingTitle || 'drawing.jpg');
+      const file = dataURLtoFile(imageDataUrl, drawingTitle || 'drawing.png');
       if (!file) {
         toast.error('Failed to convert image data to file');
         setIsPublishing(false);
@@ -103,7 +104,7 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
         title: drawingTitle || undefined,
         image: {
           item: uri,
-          type: MediaImageMimeType.JPEG,
+          type: MediaImageMimeType.PNG,
           altTag: drawingTitle || undefined,
           license: MetadataLicenseType.CCO,
         },
@@ -189,14 +190,25 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
           </div>
         </div>
         <DialogFooter>
-          <Button
+          {!walletClient && <ConnectKitButton.Custom >
+            {({ show }) => (
+              <Button
+                type="button"
+                onClick={show}
+                className="w-full mt-4"
+              >
+                Connect Wallet
+              </Button>
+            )}
+          </ConnectKitButton.Custom>}
+          {walletClient && <Button
             type="button"
             onClick={handlePublish}
             className="w-full mt-4"
-            disabled={isGenerating || !imageDataUrl || isPublishing || !walletClient}
+            disabled={isGenerating || !imageDataUrl || isPublishing}
           >
             {isPublishing ? 'Publishing...' : 'Publish'}
-          </Button>
+          </Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>

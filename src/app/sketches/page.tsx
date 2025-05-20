@@ -6,9 +6,12 @@ import { motion } from "motion/react";
 import { SkeletonCard } from "@/components/post-skeleton";
 import { UserLayerData, VectorShapeData } from "@/lib/types";
 import Konva from 'konva';
+import { Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 const ALL_DRAWINGS_STORAGE_KEY = 'drawings-storage';
-const CANVAS_WIDTH = 500; // Assuming same dimensions as draw page
+const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
 
 interface ProcessedSketch {
@@ -111,9 +114,74 @@ async function generateSketchPreview(
 }
 
 export default function SketchesPage() {
+  const router = useRouter();
   const [sketches, setSketches] = useState<ProcessedSketch[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedSketches, setSelectedSketches] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode] = useState<boolean>(false);
+
+  // Prevent any drag operations
+  const preventDrag = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  };
+
+  const handleCardClick = (sketchId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (selectMode) {
+      toggleSketchSelection(sketchId);
+    } else {
+      router.push(`/draw/${sketchId}`);
+    }
+  };
+
+  const toggleSketchSelection = (sketchId: string) => {
+    setSelectedSketches(prevSelected => {
+      const newSelected = new Set(prevSelected);
+      if (newSelected.has(sketchId)) {
+        newSelected.delete(sketchId);
+      } else {
+        newSelected.add(sketchId);
+      }
+      return newSelected;
+    });
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedSketches.size === 0) return;
+
+    try {
+      const allSavedDrawingsJSON = localStorage.getItem(ALL_DRAWINGS_STORAGE_KEY);
+      if (allSavedDrawingsJSON) {
+        const allDrawings: { [key: string]: UserLayerData[] } = JSON.parse(allSavedDrawingsJSON);
+        selectedSketches.forEach(sketchId => {
+          delete allDrawings[sketchId];
+        });
+        localStorage.setItem(ALL_DRAWINGS_STORAGE_KEY, JSON.stringify(allDrawings));
+
+        setSketches(prevSketches =>
+          prevSketches.filter(sketch => !selectedSketches.has(sketch.id))
+        );
+        setSelectedSketches(new Set());
+        // Optionally, exit select mode after deletion
+        // setSelectMode(false);
+      }
+    } catch (e) {
+      console.error("Failed to delete sketches:", e);
+      setError("Failed to delete selected sketches.");
+    }
+  };
+
+  const handleToggleSelectMode = () => {
+    setSelectMode(!selectMode);
+    if (selectMode) { // Was true, now turning off
+      setSelectedSketches(new Set()); // Clear selection when exiting select mode
+    }
+  };
 
   useEffect(() => {
     const loadSketches = async () => {
@@ -181,35 +249,80 @@ export default function SketchesPage() {
   }
 
   if (sketches.length === 0) {
-    return <p className="p-4 text-center">No sketches found. <Link href="/" className="text-blue-500 hover:underline">Start drawing!</Link></p>;
+    return <p className="p-4 text-center">No sketches found. <Link href="/" className="text-primary hover:underline">Start drawing!</Link></p>;
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-center mb-8">Your Sketches</h1>
+    <div className="container mx-auto px-4 py-8 h-screen overflow-y-auto no-scrollbar">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-center">Your Sketches</h1>
+        <div className="flex items-center justify-center gap-2">
+
+          {selectMode && selectedSketches.size > 0 && (
+            <div className="text-right">
+              <Button
+                onClick={handleDeleteSelected}
+                variant="default"
+              >
+                Delete Selected ({selectedSketches.size})
+              </Button>
+            </div>
+          )}
+          <Button
+            onClick={handleToggleSelectMode}
+            variant={selectMode ? "secondary" : "outline"}
+          >
+            {selectMode ? 'Cancel' : 'Select'}
+          </Button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 max-w-screen-md mx-auto gap-6">
         {sketches.map((sketch) => {
           const imageAlt = `Sketch ${sketch.name || sketch.id}`;
+          const isSelected = selectedSketches.has(sketch.id);
 
           return (
-            <Link key={sketch.id} href={`/draw/${sketch.id}`} passHref>
-              <motion.div
-                layoutId={`${sketch.id}`}
-                className="block bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-shadow duration-300 ease-in-out aspect-[1/1]"
+            <div
+              key={sketch.id}
+              className="no-drag"
+              onClick={(e) => handleCardClick(sketch.id, e)}
+            >
+              <div
+                className={`relative cursor-pointer group ${selectMode ? 'cursor-pointer' : 'cursor-default'} select-none no-drag`}
+                draggable="false"
               >
-                {sketch.previewUrl ? (
-                  <img
-                    src={sketch.previewUrl}
-                    alt={imageAlt}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-700">
-                    <p className="text-gray-500 dark:text-gray-400">No preview available</p>
+                {selectMode && isSelected && (
+                  <div className="absolute top-2 right-2 z-10 bg-primary text-white rounded-full p-1 text-xs">
+                    <Check size={16} />
                   </div>
                 )}
-              </motion.div>
-            </Link>
+                <motion.div
+                  layoutId={`${sketch.id}`}
+                  className={`select-none no-drag block bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl group-hover:shadow-2xl transition-shadow duration-300 ease-in-out aspect-[1/1] ${selectMode && isSelected ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                  draggable={false}
+                  drag={false}
+                >
+                  {sketch.previewUrl ? (
+                    <div className="relative w-full h-full">
+                      <img
+                        src={sketch.previewUrl}
+                        alt={imageAlt}
+                        draggable="false"
+                        className="w-full select-none pointer-events-none h-full object-cover no-drag absolute"
+                        onDragStart={preventDrag}
+                        onMouseDown={preventDrag}
+                        onTouchStart={preventDrag}
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-700">
+                      <p className="text-gray-500 dark:text-gray-400">No preview available</p>
+                    </div>
+                  )}
+                </motion.div>
+              </div>
+            </div>
           );
         })}
       </div>

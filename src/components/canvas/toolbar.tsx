@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Pencil, Eraser, PaintBucket, Palette, Sliders, PowerIcon } from 'lucide-react';
 import {
@@ -47,6 +47,37 @@ const Toolbar: React.FC<ToolbarProps> = ({
     setStrokeColor(rgbaString);
   }, [setFillColor, setStrokeColor]);
 
+  // Keyboard shortcuts handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip if user is typing in an input, textarea, etc.
+      if (e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      switch (e.key.toLowerCase()) {
+        case 'b': // Photoshop brush tool shortcut
+          setTool('pen');
+          break;
+        case 'e': // Photoshop eraser tool shortcut
+          setTool('eraser');
+          break;
+        case 'g': // Photoshop fill/paint bucket tool shortcut
+          setTool('bucket');
+          break;
+        case 'i': // Photoshop eyedropper/color picker shortcut
+          setShowColorPickerPopup(prev => !prev);
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [setTool]);
+
   return (
     <div className="p-1 bg-secondary shadow-lg rounded-lg border border-border flex flex-col gap-2 relative">
       <div className="flex flex-col gap-1 items-center rounded-md">
@@ -54,7 +85,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           variant={tool === 'pen' ? 'outline' : 'secondary'}
           size="icon"
           onClick={() => setTool('pen')}
-          title="Pen"
+          title="Pen (B)"
           className="w-10 h-10 hover:bg-background"
         >
           <Pencil className="h-5 w-5" />
@@ -63,7 +94,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           variant={tool === 'eraser' ? 'outline' : 'secondary'}
           size="icon"
           onClick={() => setTool('eraser')}
-          title="Eraser"
+          title="Eraser (E)"
           className="w-10 h-10 hover:bg-background"
         >
           <Eraser className="h-5 w-5" />
@@ -72,7 +103,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           variant={tool === 'bucket' ? 'outline' : 'secondary'}
           size="icon"
           onClick={() => setTool('bucket')}
-          title="Bucket"
+          title="Bucket (G)"
           className="w-10 h-10 hover:bg-background"
         >
           <PaintBucket className="h-5 w-5" />
@@ -81,7 +112,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           variant={showColorPickerPopup ? 'outline' : 'secondary'}
           size="icon"
           onClick={() => setShowColorPickerPopup(!showColorPickerPopup)}
-          title="Select Color"
+          title="Select Color (I)"
           className="w-10 h-10 hover:bg-background"
         >
           <div

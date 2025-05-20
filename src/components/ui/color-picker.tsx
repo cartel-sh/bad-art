@@ -56,7 +56,7 @@ export type ColorPickerProps = HTMLAttributes<HTMLDivElement> & {
 
 export const ColorPicker = ({
   value,
-  defaultValue = '#000000',
+  defaultValue = 'rgba(0, 0, 0, 1)',
   onChange,
   className,
   children,

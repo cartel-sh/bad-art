@@ -18,7 +18,6 @@ export default function Header() {
 
   const brandText = isSketchPage ? "MY/ART" : "BAD/ART";
 
-  console.log(isDrawPage, isSketchPage)
   if (isDrawPage) {
     return null
   }

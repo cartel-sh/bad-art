@@ -148,10 +148,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <ColorPicker
           value={color}
           onChange={handleColorChange}
-          className="absolute top-0 left-16 z-10 flex flex-col items-center justify-center gap-2 rounded-md">
+          className="absolute top-56 left-46 z-10 flex flex-col items-center justify-center gap-2 rounded-md">
 
           <div
-            className="absolute w-[300px] top-0 left-16 z-10 transition-all duration-300 ease-in-out transform scale-0 opacity-0 data-[open=true]:scale-100 data-[open=true]:opacity-100 my-2"
+            className="w-[300px] z-10 transition-all duration-300 ease-in-out transform scale-0 opacity-0 data-[open=true]:scale-100 data-[open=true]:opacity-100 my-2"
             data-open={showColorPickerPopup}
           >
             <div

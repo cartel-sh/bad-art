@@ -58,7 +58,6 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
   const router = useRouter();
 
   useEffect(() => {
-    console.log(imageDataUrl, isPublishing, walletClient)
     if (isOpen && stageRef.current) {
       setIsGenerating(true);
       const dataUrl = stageRef.current.toDataURL({ mimeType: 'image/png' });

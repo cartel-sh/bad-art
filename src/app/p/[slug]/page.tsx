@@ -41,6 +41,10 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   const imageUrl = imageMetadata.image?.item;
   const resolvedUrl = imageUrl ? resolveUrl(imageUrl) : undefined;
   const imageAlt = imageMetadata.image?.altTag ?? "Post image";
+  const operations = {
+    hasUpvoted: post?.operations?.hasUpvoted,
+    hasReposted: post?.operations?.hasReposted.optimistic,
+  }
 
   return (
     <div className="flex flex-col w-full min-h-screen items-center justify-center py-8">
@@ -51,7 +55,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
         <PostView post={post} />
       </div>
       <div className="w-full max-w-lg px-4 mt-4">
-        <PostInteractions post={post} />
+        <PostInteractions post={post} operations={operations} />
       </div>
     </div>
   );

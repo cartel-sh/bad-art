@@ -144,35 +144,35 @@ const Toolbar: React.FC<ToolbarProps> = ({
         </div>
       )} */}
 
-      <ColorPicker
-        value={color}
-        onChange={handleColorChange}
-        className="flex flex-col items-center justify-center gap-2 p-1 rounded-md">
+      {showColorPickerPopup && (
+        <ColorPicker
+          value={color}
+          onChange={handleColorChange}
+          className="absolute top-0 left-16 z-10 flex flex-col items-center justify-center gap-2 rounded-md">
 
-        <div className="flex flex-col items-center justify-center h-32">
-          <ColorPickerHue orientation="vertical" className="w-6 h-full flex items-center justify-center" />
-        </div>
-        <div className="flex flex-col items-center justify-center h-32">
-          <ColorPickerAlpha orientation="vertical" className="w-6 h-full flex items-center justify-center" />
-        </div>
-
-        {showColorPickerPopup && (
           <div
-            className="absolute aspect-square h-[280px] top-0 left-16 z-10 transition-all duration-300 ease-in-out transform scale-0 opacity-0 data-[open=true]:scale-100 data-[open=true]:opacity-100 my-2"
+            className="absolute w-[300px] top-0 left-16 z-10 transition-all duration-300 ease-in-out transform scale-0 opacity-0 data-[open=true]:scale-100 data-[open=true]:opacity-100 my-2"
             data-open={showColorPickerPopup}
           >
             <div
-              className="max-w-sm rounded-md border bg-card/20 p-1 shadow-lg"
+              className="rounded-md border bg-card/20 p-1 shadow-lg flex flex-col gap-4"
             >
               <ColorPickerSelection className="aspect-square w-full" />
-              <div className="flex items-center gap-2">
+
+              <div className="flex flex-col gap-4 w-full px-2">
+                <ColorPickerHue className="w-full h-4" />
+                <ColorPickerAlpha className="w-full h-4" />
+              </div>
+
+              {/* <div className="flex items-center gap-2">
                 <ColorPickerOutput />
                 <ColorPickerFormat />
-              </div>
+              </div> */}
             </div>
           </div>
-        )}
-      </ColorPicker>
+        </ColorPicker>
+      )}
+
     </div>
   );
 };

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { usePathname } from "next/navigation";
 import { Noto_Sans, Open_Sans } from "next/font/google";
-import Image from "next/image";
 
 const geistSans = Noto_Sans({
   variable: "--font-geist-sans",
@@ -19,6 +18,7 @@ export default function Header() {
 
   const brandText = isSketchPage ? "MY/ART" : "BAD/ART";
 
+  console.log(isDrawPage, isSketchPage)
   if (isDrawPage) {
     return null
   }
@@ -26,7 +26,7 @@ export default function Header() {
   return (
     <>
       <motion.header
-        className="w-fit absolute top-0 left-0 z-40 h-[8vh] flex items-center justify-start px-4 py-3"
+        className="w-fit absolute top-0 left-0 z-[200] h-[8vh] flex items-center justify-start px-4 py-3"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}

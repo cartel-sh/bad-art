@@ -3,7 +3,8 @@ import { resolveUrl } from "@/lib/resolve-url";
 import { Post, ImageMetadata } from "@lens-protocol/client";
 import { fetchPost } from "@lens-protocol/client/actions";
 import PostView from "@/components/post-view";
-import Sidebar from "@/components/sidebar";
+import AuthorInfo from "@/components/author-info";
+import PostInteractions from "@/components/post-interactions";
 
 export default async function PostPage({ params }: { params: { slug: string } }) {
   const slug = params.slug;
@@ -41,11 +42,16 @@ export default async function PostPage({ params }: { params: { slug: string } })
   const imageAlt = imageMetadata.image?.altTag ?? "Post image";
 
   return (
-    <div className="flex w-full h-full flex-grow overflow-visible">
-      <div className="flex-grow">
+    <div className="flex flex-col w-full min-h-screen items-center justify-center py-8">
+      <div className="w-full max-w-lg px-4 mb-4">
+        <AuthorInfo post={post} />
+      </div>
+      <div className="w-full max-w-lg p-4 py-6">
         <PostView post={post} />
       </div>
-      <Sidebar post={post} />
+      <div className="w-full max-w-lg px-4 mt-4">
+        <PostInteractions post={post} />
+      </div>
     </div>
   );
 } 

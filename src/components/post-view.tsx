@@ -4,9 +4,10 @@ import { Post, ImageMetadata } from "@lens-protocol/client";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { XIcon } from "lucide-react";
 import GlareCard from "./effects/glare-card";
 import { resolveUrl } from "@/lib/resolve-url";
+import { Button } from "./ui/button";
 
 export default function PostView({ post }: { post: Post }) {
   const router = useRouter();
@@ -27,20 +28,12 @@ export default function PostView({ post }: { post: Post }) {
 
   return (
     <div
-      className="w-full z-[100] bg-background flex items-center justify-center relative h-full overflow-visible"
+      className="w-full flex items-center justify-center relative"
       onClick={handleBackdropClick}
     >
-      <Link href="/?from=postview" passHref>
-        <motion.button
-          className="absolute top-4 left-4 z-10 p-2 rounded-sm"
-          aria-label="Go back to feed"
-        >
-          <ArrowLeft size={18} />
-        </motion.button>
-      </Link>
       <motion.div
         layoutId={`${post.id}`}
-        className="w-[65%] h-auto flex items-center justify-center"
+        className="w-full"
         initial={{ opacity: 0, scale: 0.5 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}

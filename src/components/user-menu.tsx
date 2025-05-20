@@ -17,6 +17,7 @@ import { useDisconnect } from "wagmi";
 import { useRouter } from "next/navigation";
 import { useAuthenticatedUser } from "@lens-protocol/react";
 import { Login } from "./login";
+import { Button } from "./ui/button";
 
 export default function UserMenu() {
   const { account, loading } = useAccount();
@@ -49,18 +50,18 @@ export default function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center justify-center gap-2 w-10 h-10 outline-none">
+        <Button variant="ghost" className="flex rounded-full items-center justify-center gap-2 w-10 h-10 outline-none">
           <Avatar className="h-8 w-8">
             <AvatarImage src={pictureUrl || undefined} />
             <AvatarFallback>{account.address.substring(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48 rounded-lg">
         <DropdownMenuItem asChild>
           <Link href="/sketches" className="flex items-center cursor-pointer">
             <Brush className="mr-2 h-4 w-4" />
-            <span>My Sketches</span>
+            <span>My Art</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleLogout} className="">

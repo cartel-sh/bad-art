@@ -59,7 +59,7 @@ export default function Sidebar({ post }: SidebarProps) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 50 }}
-      className="w-96 flex-shrink-0 bg-background p-4 pr-8 flex flex-col space-y-4 h-full"
+      className="w-96 flex-shrink-0 bg-background p-8 flex flex-col space-y-4 h-full"
     >
       <div className="mb-auto space-y-4">
         {post && metadata && (
@@ -72,10 +72,10 @@ export default function Sidebar({ post }: SidebarProps) {
                     <AvatarFallback>{authorDisplayName?.substring(0, 2).toUpperCase() || "A"}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-sm font-medium">{authorDisplayName}</p>
+                    <p className="text-md font-medium">{authorDisplayName}</p>
                   </div>
                 </div>
-                <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                <span className="text-md text-gray-500 dark:text-gray-400 whitespace-nowrap">
                   {formatTimeAgo(post.timestamp)}
                 </span>
               </div>
@@ -84,9 +84,9 @@ export default function Sidebar({ post }: SidebarProps) {
             {metadata.title && (
               <h2 className="text-2xl font-bold mb-3">{metadata.title}</h2>
             )}
-            {metadata.content && <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{metadata.content}</p>}
+            {metadata.content && <p className="text-md text-gray-600 dark:text-gray-400 mb-3">{metadata.content}</p>}
 
-            <div className="py-12 flex justify-around items-center text-sm text-gray-600 dark:text-gray-400">
+            <div className="py-12 flex justify-around items-center text-md text-gray-600 dark:text-gray-400">
               <div className="flex items-center space-x-1.5">
                 <Heart size={20} />
                 <span>{post.stats.upvotes}</span>

@@ -6,6 +6,7 @@ import { DrawButton } from "@/components/draw-button";
 import UserMenu from "@/components/user-menu";
 import { buttonVariants } from "@/components/ui/button"; // For styling consistency
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "./theme-toggle";
 
 export default function GlobalMenu() {
   return (
@@ -17,8 +18,9 @@ export default function GlobalMenu() {
       >
         <HomeIcon className="h-8 w-8" strokeWidth={3} />
       </Link>
-      <DrawButton />
+      <ThemeToggle />
       <UserMenu />
+      <DrawButton />
     </div>
   );
 } 

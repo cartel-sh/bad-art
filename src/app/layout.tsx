@@ -31,7 +31,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             <Toaster position="top-center" />
             <Header />
             <GlobalMenu />
-            <div className="h-[92vh] w-full">
+            <div className="h-full w-full">
               {children}
             </div>
           </>

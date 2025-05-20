@@ -235,7 +235,7 @@ export default function SketchesPage() {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 mx-auto max-w-screen-sm gap-6">
           {Array.from({ length: 8 }).map((_, index) => (
             <SkeletonCard key={index} />
           ))}
@@ -253,31 +253,26 @@ export default function SketchesPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 h-full overflow-y-auto no-scrollbar">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-center">Your Sketches</h1>
-        <div className="flex items-center justify-center gap-2">
+    <div className="container mx-auto px-4 py-8 h-full overflow-y-auto no-scrollbar relative">
+      {selectMode && selectedSketches.size > 0 && (
+        <Button
+          onClick={handleDeleteSelected}
+          variant="default"
+          className="fixed top-5 right-26 z-10"
+        >
+          Delete Selected ({selectedSketches.size})
+        </Button>
+      )}
 
-          {selectMode && selectedSketches.size > 0 && (
-            <div className="text-right">
-              <Button
-                onClick={handleDeleteSelected}
-                variant="default"
-              >
-                Delete Selected ({selectedSketches.size})
-              </Button>
-            </div>
-          )}
-          <Button
-            onClick={handleToggleSelectMode}
-            variant={selectMode ? "secondary" : "outline"}
-          >
-            {selectMode ? 'Cancel' : 'Select'}
-          </Button>
-        </div>
-      </div>
+      <Button
+        onClick={handleToggleSelectMode}
+        variant={selectMode ? "secondary" : "outline"}
+        className="fixed top-5 right-4 z-10"
+      >
+        {selectMode ? 'Cancel' : 'Select'}
+      </Button>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 max-w-screen-md mx-auto gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 max-w-screen-sm mx-auto gap-6 pt-14">
         {sketches.map((sketch) => {
           const imageAlt = `Sketch ${sketch.name || sketch.id}`;
           const isSelected = selectedSketches.has(sketch.id);

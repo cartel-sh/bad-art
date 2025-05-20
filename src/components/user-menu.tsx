@@ -46,7 +46,6 @@ export default function UserMenu() {
     window.location.reload();
   }
 
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -58,14 +57,10 @@ export default function UserMenu() {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48 rounded-lg">
-        <div className="px-2 py-1.5">
-          <p className="text-sm font-medium">{displayName}</p>
-        </div>
-        <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/sketches" className="flex items-center cursor-pointer">
             <Brush className="mr-2 h-4 w-4" />
-            <span>Sketches</span>
+            <span>My Sketches</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleLogout} className="">

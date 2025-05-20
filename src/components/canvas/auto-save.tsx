@@ -45,11 +45,11 @@ export default function AutoSave({
             allDrawings = JSON.parse(allSavedDrawingsJSON);
           } catch (error) {
             console.error(`Failed to parse all drawings from localStorage (key: ${storageKey}) before saving`, error);
-            allDrawings = {}; // Reset if parsing fails to avoid compounding issues.
+            allDrawings = {};
           }
         }
 
-        allDrawings[drawingId] = layers; // Update the data for the current drawing ID
+        allDrawings[drawingId] = layers;
 
         console.log(`Auto-saving drawing ${drawingId} to ${storageKey}`);
         localStorage.setItem(storageKey, JSON.stringify(allDrawings));

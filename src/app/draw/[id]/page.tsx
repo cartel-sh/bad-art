@@ -399,7 +399,6 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
           onDeleteLayer={handleDeleteLayer}
           onReorderLayers={handleReorderLayers}
         />
-        <p className="mt-2 text-xs text-gray-500">Drawing ID: {props.id}</p>
       </div>
 
       <div className="absolute bottom-4 left-4 z-10">

@@ -426,6 +426,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
         onClose={handleClosePublishDialog}
         stageRef={stageRef}
         onPublish={handlePublishDrawing}
+        layers={layers}
       />
     </div>
   );

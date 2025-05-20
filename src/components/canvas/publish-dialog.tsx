@@ -14,6 +14,7 @@ import { fetchPost, post } from '@lens-protocol/client/actions';
 import { handleOperationWith } from '@lens-protocol/client/viem';
 import { ConnectKitButton } from 'connectkit';
 import { useRouter } from 'next/navigation';
+import { UserLayerData } from '@/lib/types';
 
 const dataURLtoFile = (dataurl: string, filename: string): File | null => {
   const arr = dataurl.split(',');
@@ -39,6 +40,7 @@ interface PublishDialogProps {
   onClose: () => void;
   stageRef: React.RefObject<Konva.Stage | null>;
   onPublish: (uri: string) => void;
+  layers: UserLayerData[];
 }
 
 const PublishDialog: React.FC<PublishDialogProps> = ({
@@ -46,6 +48,7 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
   onClose,
   stageRef,
   onPublish,
+  layers,
 }) => {
   const [imageDataUrl, setImageDataUrl] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
@@ -113,8 +116,13 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
         attributes: [
           {
             type: MetadataAttributeType.STRING,
-            key: 'Category',
+            key: 'category',
             value: 'Art',
+          },
+          {
+            type: MetadataAttributeType.JSON,
+            key: 'file',
+            value: JSON.stringify(layers),
           },
         ],
       });

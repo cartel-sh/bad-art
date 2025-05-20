@@ -1,10 +1,15 @@
 "use client";
 
 import { Post, ImageMetadata } from "@lens-protocol/client";
-import { Heart, MessageCircle, Repeat } from "lucide-react";
+import { Heart, MessageCircle, Repeat, Brush } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { resolveUrl } from "@/lib/resolve-url";
 import { motion } from "motion/react";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { UserLayerData } from "@/lib/types";
+import { toast } from "sonner";
+import { createDraftDrawing } from "@/lib/drawing-utils";
 
 interface SidebarProps {
   post?: Post;
@@ -38,9 +43,15 @@ const formatTimeAgo = (timestamp?: string): string => {
 };
 
 export default function Sidebar({ post }: SidebarProps) {
+  const router = useRouter();
   const metadata = post?.metadata as ImageMetadata;
   const authorPictureRaw = post?.author.metadata?.picture;
   const authorDisplayName = post?.author.metadata?.name || post?.author.username?.localName || post?.author.address.substring(0, 6);
+
+  const fileAttribute = metadata?.attributes?.find(
+    (attr) => attr.key === 'file'
+  );
+  const canDerive = fileAttribute && typeof fileAttribute.value === 'string' && fileAttribute.value.trim() !== '';
 
   return (
     <motion.div
@@ -89,9 +100,55 @@ export default function Sidebar({ post }: SidebarProps) {
                 <span>{post.stats.comments}</span>
               </div>
             </div>
+
+            {canDerive && (
+              <div className="mt-6">
+                <Button
+                  onClick={() => handleDeriveClick()}
+                  className="w-full flex items-center justify-center gap-2"
+                  variant="outline"
+                >
+                  <Brush size={18} />
+                  Derive Drawing
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
     </motion.div>
   );
+
+  function handleDeriveClick() {
+    if (!post || !metadata || !metadata.attributes) {
+      toast.error("Post data is not available for derivation.");
+      return;
+    }
+
+    if (!fileAttribute || typeof fileAttribute.value !== 'string') {
+      toast.error("No derivable layer data found in this post.");
+      return;
+    }
+
+    let layers: UserLayerData[];
+    try {
+      layers = JSON.parse(fileAttribute.value);
+      if (!Array.isArray(layers) || layers.some(layer => typeof layer.id !== 'string')) {
+        throw new Error("Parsed layer data is not valid.");
+      }
+    } catch (error) {
+      console.error("Failed to parse layer data:", error);
+      toast.error("Failed to parse layer data from post.");
+      return;
+    }
+
+    const newDrawingId = createDraftDrawing(layers);
+
+    if (newDrawingId) {
+      router.push(`/draw/${newDrawingId}`);
+      toast.success(`Derived ${authorDisplayName}'s drawing!`, { duration: 1000 });
+    } else {
+      toast.error("Failed to save derived drawing locally.");
+    }
+  }
 } 

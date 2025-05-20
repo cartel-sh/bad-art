@@ -59,7 +59,7 @@ export default function Sidebar({ post }: SidebarProps) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 50 }}
-      className="w-96 flex-shrink-0 bg-background drop-shadow-lg drop-shadow-black/20 shadow-black/20 p-8 flex flex-col space-y-4 h-screen"
+      className="w-96 flex-shrink-0 bg-background p-4 pr-8 flex flex-col space-y-4 h-full"
     >
       <div className="mb-auto space-y-4">
         {post && metadata && (

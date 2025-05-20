@@ -27,7 +27,7 @@ export default function PostView({ post }: { post: Post }) {
 
   return (
     <div
-      className="w-full z-[100] bg-background flex items-center justify-center relative h-screen overflow-visible"
+      className="w-full z-[100] bg-background flex items-center justify-center relative h-full overflow-visible"
       onClick={handleBackdropClick}
     >
       <Link href="/?from=postview" passHref>

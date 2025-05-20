@@ -253,7 +253,7 @@ export default function SketchesPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 h-screen overflow-y-auto no-scrollbar">
+    <div className="container mx-auto px-4 py-8 h-full overflow-y-auto no-scrollbar">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-center">Your Sketches</h1>
         <div className="flex items-center justify-center gap-2">

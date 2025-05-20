@@ -41,7 +41,7 @@ export default async function PostPage({ params }: { params: { slug: string } })
   const imageAlt = imageMetadata.image?.altTag ?? "Post image";
 
   return (
-    <div className="flex w-full h-screen overflow-visible">
+    <div className="flex w-full h-full flex-grow overflow-visible">
       <div className="flex-grow">
         <PostView post={post} />
       </div>

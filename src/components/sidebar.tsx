@@ -1,7 +1,7 @@
 "use client";
 
 import { Post, ImageMetadata } from "@lens-protocol/client";
-import { Heart, MessageCircle, Repeat, Brush } from "lucide-react";
+import { Heart, MessageCircle, Repeat, Brush, GitPullRequest, GitBranchIcon, GitFork } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { resolveUrl } from "@/lib/resolve-url";
 import { motion } from "motion/react";
@@ -63,7 +63,7 @@ export default function Sidebar({ post }: SidebarProps) {
     >
       <div className="mb-auto space-y-4">
         {post && metadata && (
-          <div className="pt-4">
+          <div >
             {post.author && (
               <div className="flex items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2">
@@ -86,7 +86,7 @@ export default function Sidebar({ post }: SidebarProps) {
             )}
             {metadata.content && <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{metadata.content}</p>}
 
-            <div className="mt-6 flex justify-around items-center text-sm text-gray-600 dark:text-gray-400">
+            <div className="py-12 flex justify-around items-center text-sm text-gray-600 dark:text-gray-400">
               <div className="flex items-center space-x-1.5">
                 <Heart size={20} />
                 <span>{post.stats.upvotes}</span>
@@ -100,22 +100,21 @@ export default function Sidebar({ post }: SidebarProps) {
                 <span>{post.stats.comments}</span>
               </div>
             </div>
-
-            {canDerive && (
-              <div className="mt-6">
-                <Button
-                  onClick={() => handleDeriveClick()}
-                  className="w-full flex items-center justify-center gap-2"
-                  variant="outline"
-                >
-                  <Brush size={18} />
-                  Derive Drawing
-                </Button>
-              </div>
-            )}
           </div>
         )}
       </div>
+      {canDerive && (
+        <div className="mt-6">
+          <Button
+            onClick={() => handleDeriveClick()}
+            className="w-full flex items-center justify-center gap-3"
+            variant="secondary"
+          >
+            <GitFork size={18} />
+            Derive Drawing
+          </Button>
+        </div>
+      )}
     </motion.div>
   );
 

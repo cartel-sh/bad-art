@@ -1,8 +1,8 @@
 "use client";
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Undo, Redo } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Redo, Undo } from "lucide-react";
+import React from "react";
 
 interface HistoryControlsProps {
   onUndo: () => void;
@@ -11,12 +11,7 @@ interface HistoryControlsProps {
   canRedo: boolean;
 }
 
-const HistoryControls: React.FC<HistoryControlsProps> = ({
-  onUndo,
-  onRedo,
-  canUndo,
-  canRedo
-}) => {
+const HistoryControls: React.FC<HistoryControlsProps> = ({ onUndo, onRedo, canUndo, canRedo }) => {
   return (
     <div className="bg-secondary rounded-md p-1 shadow-lg rounded-lg border border-border flex gap-1">
       <Button
@@ -43,4 +38,4 @@ const HistoryControls: React.FC<HistoryControlsProps> = ({
   );
 };
 
-export default HistoryControls; 
+export default HistoryControls;

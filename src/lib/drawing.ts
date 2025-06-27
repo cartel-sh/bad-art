@@ -1,4 +1,4 @@
-import Konva from 'konva';
+import Konva from "konva";
 
 export function getPointerPosition(stage: Konva.Stage | null): { x: number; y: number } | null {
   if (!stage) return null;
@@ -8,9 +8,15 @@ export function getPointerPosition(stage: Konva.Stage | null): { x: number; y: n
 }
 
 export function colorsMatch(
-  r1: number, g1: number, b1: number, a1: number,
-  r2: number, g2: number, b2: number, a2: number,
-  tolerance: number
+  r1: number,
+  g1: number,
+  b1: number,
+  a1: number,
+  r2: number,
+  g2: number,
+  b2: number,
+  a2: number,
+  tolerance: number,
 ): boolean {
   if (a1 < 5 && a2 < 5) return true;
 
@@ -29,7 +35,6 @@ export interface FloodFillParams {
   fillColor: { r: number; g: number; b: number; a: number };
   tolerance: number;
 }
-
 
 export function performFloodFill({
   imageData,
@@ -54,7 +59,19 @@ export function performFloodFill({
   };
 
   const initialPixelOffset = (startY * width + startX) * 4;
-  if (!colorsMatch(getPixelR(initialPixelOffset), getPixelG(initialPixelOffset), getPixelB(initialPixelOffset), getPixelA(initialPixelOffset), targetColor.r, targetColor.g, targetColor.b, targetColor.a, tolerance)) {
+  if (
+    !colorsMatch(
+      getPixelR(initialPixelOffset),
+      getPixelG(initialPixelOffset),
+      getPixelB(initialPixelOffset),
+      getPixelA(initialPixelOffset),
+      targetColor.r,
+      targetColor.g,
+      targetColor.b,
+      targetColor.a,
+      tolerance,
+    )
+  ) {
     return null; // Start point does not match target color
   }
 
@@ -70,7 +87,10 @@ export function performFloodFill({
     const [x, y] = queue[head++];
 
     const neighbors = [
-      [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]
+      [x + 1, y],
+      [x - 1, y],
+      [x, y + 1],
+      [x, y - 1],
     ];
 
     for (const [nx, ny] of neighbors) {
@@ -78,7 +98,19 @@ export function performFloodFill({
         const neighborIndexInVisited = ny * width + nx;
         if (visited[neighborIndexInVisited] === 0) {
           const neighborOffset = (ny * width + nx) * 4;
-          if (colorsMatch(getPixelR(neighborOffset), getPixelG(neighborOffset), getPixelB(neighborOffset), getPixelA(neighborOffset), targetColor.r, targetColor.g, targetColor.b, targetColor.a, tolerance)) {
+          if (
+            colorsMatch(
+              getPixelR(neighborOffset),
+              getPixelG(neighborOffset),
+              getPixelB(neighborOffset),
+              getPixelA(neighborOffset),
+              targetColor.r,
+              targetColor.g,
+              targetColor.b,
+              targetColor.a,
+              tolerance,
+            )
+          ) {
             setPixel(neighborOffset);
             visited[neighborIndexInVisited] = 1;
             queue.push([nx, ny]);

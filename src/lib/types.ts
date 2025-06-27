@@ -1,8 +1,8 @@
-export type ToolbarTool = 'pen' | 'eraser' | 'bucket';
+export type ToolbarTool = "pen" | "eraser" | "bucket";
 
 export interface VectorShapeData {
   id: string;
-  tool: 'pen' | 'eraser';
+  tool: "pen" | "eraser";
   points: number[];
   stroke: string;
   strokeWidth: number;

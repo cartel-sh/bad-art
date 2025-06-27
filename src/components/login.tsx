@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { DialogTrigger } from "@/components/ui/dialog";
 import { useAuthenticatedUser } from "@lens-protocol/react";
 import { ConnectKitButton } from "connectkit";
+import { Loader2Icon, LogInIcon, User2Icon } from "lucide-react";
 import { useState } from "react";
 import { AccountSelector } from "./accounts";
-import { Loader2Icon, LogInIcon, User2Icon } from "lucide-react";
 
 export function Login() {
   const [showAccountSelector, setShowAccountSelector] = useState(true);
@@ -41,11 +41,14 @@ export function Login() {
           }
 
           if (isWalletConnected && authenticatedUser) {
-            return null
+            return null;
           }
 
-
-          return <p className="text-xs text-muted-foreground"><Loader2Icon className="w-4 h-4 animate-spin" /></p>;
+          return (
+            <p className="text-xs text-muted-foreground">
+              <Loader2Icon className="w-4 h-4 animate-spin" />
+            </p>
+          );
         }}
       </ConnectKitButton.Custom>
     </div>

@@ -1,17 +1,17 @@
 "use client";
 
-import { Post, ImageMetadata } from "@lens-protocol/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { resolveUrl } from "@/lib/resolve-url";
-import { motion } from "motion/react";
-import { ExternalLink, MoreHorizontal, MoreVertical } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import { resolveUrl } from "@/lib/resolve-url";
+import { ImageMetadata, Post } from "@lens-protocol/client";
+import { ExternalLink, MoreHorizontal, MoreVertical } from "lucide-react";
+import { motion } from "motion/react";
 
 interface AuthorInfoProps {
   post?: Post;
@@ -46,7 +46,8 @@ const formatTimeAgo = (timestamp?: string): string => {
 export default function AuthorInfo({ post }: AuthorInfoProps) {
   const metadata = post?.metadata as ImageMetadata;
   const authorPictureRaw = post?.author.metadata?.picture;
-  const authorDisplayName = post?.author.metadata?.name || post?.author.username?.localName || post?.author.address.substring(0, 6);
+  const authorDisplayName =
+    post?.author.metadata?.name || post?.author.username?.localName || post?.author.address.substring(0, 6);
 
   return (
     <motion.div
@@ -98,12 +99,10 @@ export default function AuthorInfo({ post }: AuthorInfoProps) {
             </div>
           )}
 
-          {metadata.title && (
-            <h2 className="text-2xl font-bold mb-2">{metadata.title}</h2>
-          )}
+          {metadata.title && <h2 className="text-2xl font-bold mb-2">{metadata.title}</h2>}
           {metadata.content && <p className="text-md text-gray-600 dark:text-gray-400">{metadata.content}</p>}
         </div>
       )}
     </motion.div>
   );
-} 
+}

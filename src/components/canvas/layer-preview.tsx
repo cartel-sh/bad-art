@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
-import Konva from 'konva';
-import { UserLayerData, VectorShapeData } from '@/lib/types';
-import { ImageOff } from 'lucide-react'; 
+import { UserLayerData, VectorShapeData } from "@/lib/types";
+import Konva from "konva";
+import { ImageOff } from "lucide-react";
+import React, { useEffect, useRef } from "react";
 
 interface LayerPreviewProps {
   layerData: UserLayerData;
@@ -27,7 +27,7 @@ const LayerPreview: React.FC<LayerPreviewProps> = ({
     if (mainCanvasWidth === 0 || mainCanvasHeight === 0) {
       stageRef.current?.destroy();
       stageRef.current = null;
-      containerRef.current.innerHTML = '';
+      containerRef.current.innerHTML = "";
       return;
     }
 
@@ -43,7 +43,7 @@ const LayerPreview: React.FC<LayerPreviewProps> = ({
       stageRef.current.height(thumbHeight);
     }
 
-    let konvaLayer = stageRef.current.findOne<Konva.Layer>('Layer');
+    let konvaLayer = stageRef.current.findOne<Konva.Layer>("Layer");
     if (konvaLayer) {
       konvaLayer.destroyChildren(); // Clear existing content if layer persists
     } else {
@@ -53,8 +53,11 @@ const LayerPreview: React.FC<LayerPreviewProps> = ({
 
     // 1. Add solid background
     const background = new Konva.Rect({
-      x: 0, y: 0, width: thumbWidth, height: thumbHeight,
-      fill: '#FFFFFF', // White background, can be changed to checkerboard later
+      x: 0,
+      y: 0,
+      width: thumbWidth,
+      height: thumbHeight,
+      fill: "#FFFFFF", // White background, can be changed to checkerboard later
       listening: false,
     });
     konvaLayer.add(background);
@@ -63,19 +66,23 @@ const LayerPreview: React.FC<LayerPreviewProps> = ({
       // 2. Draw raster data if available
       const rasterPromise = layerData.rasterDataUrl
         ? new Promise<void>((resolve) => {
-          Konva.Image.fromURL(layerData.rasterDataUrl!, (img) => {
-            img.setAttrs({
-              width: thumbWidth, // Fit image to thumb dimensions
-              height: thumbHeight,
-              listening: false
-            });
-            konvaLayer.add(img); // Added on top of background
-            resolve();
-          }, () => {
-            console.warn("Failed to load raster image for preview for layer: " + layerData.name);
-            resolve(); // Resolve even on error to proceed to vectors
-          });
-        })
+            Konva.Image.fromURL(
+              layerData.rasterDataUrl!,
+              (img) => {
+                img.setAttrs({
+                  width: thumbWidth, // Fit image to thumb dimensions
+                  height: thumbHeight,
+                  listening: false,
+                });
+                konvaLayer.add(img); // Added on top of background
+                resolve();
+              },
+              () => {
+                console.warn("Failed to load raster image for preview for layer: " + layerData.name);
+                resolve(); // Resolve even on error to proceed to vectors
+              },
+            );
+          })
         : Promise.resolve();
 
       rasterPromise.then(() => {
@@ -91,16 +98,16 @@ const LayerPreview: React.FC<LayerPreviewProps> = ({
           const offsetY = (thumbHeight - scaledContentActualHeight) / 2;
 
           layerData.vectorShapes.forEach((shapeData: VectorShapeData) => {
-            if ((shapeData.tool === 'pen' || shapeData.tool === 'eraser') && shapeData.points) {
+            if ((shapeData.tool === "pen" || shapeData.tool === "eraser") && shapeData.points) {
               const scaledPoints = shapeData.points.map((val, idx) =>
-                idx % 2 === 0 ? val * scale + offsetX : val * scale + offsetY
+                idx % 2 === 0 ? val * scale + offsetX : val * scale + offsetY,
               );
               const line = new Konva.Line({
                 points: scaledPoints,
                 stroke: shapeData.stroke,
                 strokeWidth: Math.max(0.5, (shapeData.strokeWidth || 1) * scale), // Ensure stroke is visible, default 1 if undefined
-                lineCap: 'round',
-                lineJoin: 'round',
+                lineCap: "round",
+                lineJoin: "round",
                 tension: shapeData.tension || 0,
                 globalCompositeOperation: shapeData.globalCompositeOperation,
                 perfectDrawEnabled: false,
@@ -120,10 +127,9 @@ const LayerPreview: React.FC<LayerPreviewProps> = ({
       stageRef.current?.destroy();
       stageRef.current = null;
     };
-
   }, [layerData, thumbWidth, thumbHeight, mainCanvasWidth, mainCanvasHeight]);
 
-  return <div ref={containerRef} style={{ width: thumbWidth, height: thumbHeight, overflow: 'hidden' }} />;
+  return <div ref={containerRef} style={{ width: thumbWidth, height: thumbHeight, overflow: "hidden" }} />;
 };
 
-export default LayerPreview; 
+export default LayerPreview;

@@ -1,15 +1,15 @@
 "use client";
 
+import { useFeed } from "@/contexts/feed-context";
 import { getLensClient } from "@/lib/lens/client";
 import { resolveUrl } from "@/lib/resolve-url";
 import { AnyPost, MainContentFocus, Post, PostType } from "@lens-protocol/client";
 import { fetchPosts } from "@lens-protocol/client/actions";
-import { useEffect } from "react";
-import Link from "next/link";
 import { motion } from "motion/react";
-import { useSearchParams, useRouter } from 'next/navigation';
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { SkeletonCard } from "./post-skeleton";
-import { useFeed } from "@/contexts/feed-context";
 
 const APP = process.env.NEXT_PUBLIC_APP_ADDRESS;
 
@@ -26,13 +26,13 @@ export function Feed() {
     setLoading,
     setError,
     addPosts,
-    clearFeed
+    clearFeed,
   } = useFeed();
   const searchParams = useSearchParams();
   const router = useRouter();
 
   useEffect(() => {
-    const fromPostView = searchParams.get('from') === 'postview';
+    const fromPostView = searchParams.get("from") === "postview";
 
     if (fromPostView && posts.length > 0) {
       const currentPath = window.location.pathname;
@@ -114,7 +114,11 @@ export function Feed() {
   };
 
   if (!APP && !loading && posts.length === 0) {
-    return <p className="text-red-500 p-4 text-center">Error: App EVM address is not configured. Please set NEXT_PUBLIC_APP_EVM_ADDRESS in your .env.local file.</p>;
+    return (
+      <p className="text-red-500 p-4 text-center">
+        Error: App EVM address is not configured. Please set NEXT_PUBLIC_APP_EVM_ADDRESS in your .env.local file.
+      </p>
+    );
   }
 
   if (loading && posts.length === 0 && !error) {
@@ -145,8 +149,8 @@ export function Feed() {
             return null;
           }
 
-          const imageUrl = post.metadata.image.item
-          const resolvedUrl = resolveUrl(imageUrl)
+          const imageUrl = post.metadata.image.item;
+          const resolvedUrl = resolveUrl(imageUrl);
           const imageAlt = post.metadata.image.altTag ?? post.id;
 
           return (
@@ -155,11 +159,7 @@ export function Feed() {
                 layoutId={`${post.id}`}
                 className="block bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-shadow duration-300 ease-in-out aspect-[1/1]"
               >
-                <img
-                  src={resolvedUrl}
-                  alt={imageAlt}
-                  className="w-full h-full object-cover"
-                />
+                <img src={resolvedUrl} alt={imageAlt} className="w-full h-full object-cover" />
               </motion.div>
             </Link>
           );
@@ -183,4 +183,4 @@ export function Feed() {
       )}
     </div>
   );
-} 
+}

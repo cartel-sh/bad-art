@@ -1,9 +1,9 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { Account } from "@lens-protocol/client";
 import { getLensClient } from "@/lib/lens/client";
+import { Account } from "@lens-protocol/client";
 import { fetchAccount } from "@lens-protocol/client/actions";
+import { ReactNode, createContext, useContext, useEffect, useState } from "react";
 
 type AccountContextType = {
   account: Account | null;
@@ -37,11 +37,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  return (
-    <AccountContext.Provider value={{ account, loading }}>
-      {children}
-    </AccountContext.Provider>
-  );
+  return <AccountContext.Provider value={{ account, loading }}>{children}</AccountContext.Provider>;
 }
 
 export function useAccount() {
@@ -50,4 +46,4 @@ export function useAccount() {
     throw new Error("useAccount must be used within an AccountProvider");
   }
   return context;
-} 
+}

@@ -1,20 +1,20 @@
 "use client";
 
-import React, { useState, useRef, useEffect, use, useCallback } from 'react';
-import { Stage, Layer, Line, Rect, Image as KonvaImage } from 'react-konva';
-import Konva from 'konva';
-import { Button } from '@/components/ui/button';
-import Toolbar, { Tool as ToolbarUITool } from '../../../components/canvas/toolbar';
-import { colorsMatch, getPointerPosition } from '@/lib/drawing';
-import LayersPanel from '@/components/canvas/layers';
-import HistoryControls from '@/components/canvas/history';
-import { useDrawingInteractions } from '@/hooks/use-interactions';
-import { UserLayerData, ToolbarTool } from '@/lib/types';
-import { Undo, Redo } from 'lucide-react';
-import { arrayMove } from '@dnd-kit/sortable';
-import AutoSave from '../../../components/canvas/auto-save';
-import PublishDialog from '@/components/canvas/publish-dialog';
-import { motion } from 'motion/react';
+import HistoryControls from "@/components/canvas/history";
+import LayersPanel from "@/components/canvas/layers";
+import PublishDialog from "@/components/canvas/publish-dialog";
+import { Button } from "@/components/ui/button";
+import { useDrawingInteractions } from "@/hooks/use-interactions";
+import { colorsMatch, getPointerPosition } from "@/lib/drawing";
+import { ToolbarTool, UserLayerData } from "@/lib/types";
+import { arrayMove } from "@dnd-kit/sortable";
+import Konva from "konva";
+import { Redo, Undo } from "lucide-react";
+import { motion } from "motion/react";
+import React, { useState, useRef, useEffect, use, useCallback } from "react";
+import { Image as KonvaImage, Layer, Line, Rect, Stage } from "react-konva";
+import AutoSave from "../../../components/canvas/auto-save";
+import Toolbar, { Tool as ToolbarUITool } from "../../../components/canvas/toolbar";
 
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
@@ -25,15 +25,15 @@ export interface UpdateHistoryOptions {
 
 export default function DrawPage({ params }: { params: Promise<{ id: string }> }) {
   const props = use(params);
-  const [tool, setTool] = useState<ToolbarUITool>('pen');
+  const [tool, setTool] = useState<ToolbarUITool>("pen");
 
   const [layers, setLayersInternal] = useState<UserLayerData[]>([]);
   const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
 
   const [layerImageElements, setLayerImageElements] = useState<{ [key: string]: HTMLImageElement }>({});
 
-  const [fillColor, setFillColor] = useState<string>('#000000');
-  const [strokeColor, setStrokeColor] = useState<string>('#000000');
+  const [fillColor, setFillColor] = useState<string>("#000000");
+  const [strokeColor, setStrokeColor] = useState<string>("#000000");
   const [tolerance, setTolerance] = useState<number>(20);
   const [strokeWidth, setStrokeWidth] = useState<number>(5);
 
@@ -46,36 +46,36 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   const [isPublishDialogOpen, setIsPublishDialogOpen] = useState<boolean>(false);
 
   const MAX_HISTORY_LENGTH = 50;
-  const ALL_DRAWINGS_STORAGE_KEY = 'drawings-storage';
+  const ALL_DRAWINGS_STORAGE_KEY = "drawings-storage";
 
-  const updateLayersAndHistory = useCallback((
-    newLayersProvider: UserLayerData[] | ((prevState: UserLayerData[]) => UserLayerData[]),
-    options?: UpdateHistoryOptions
-  ) => {
-    setLayersInternal(prevActualLayers => {
-      const newLayers = typeof newLayersProvider === 'function' ? newLayersProvider(prevActualLayers) : newLayersProvider;
+  const updateLayersAndHistory = useCallback(
+    (
+      newLayersProvider: UserLayerData[] | ((prevState: UserLayerData[]) => UserLayerData[]),
+      options?: UpdateHistoryOptions,
+    ) => {
+      setLayersInternal((prevActualLayers) => {
+        const newLayers =
+          typeof newLayersProvider === "function" ? newLayersProvider(prevActualLayers) : newLayersProvider;
 
-      if (!options?.skipHistory) {
-        setHistory(prevHistory => {
-          const historyUpToCurrent = prevHistory.slice(0, currentHistoryIndex + 1);
-          let updatedHistory = [...historyUpToCurrent, newLayers];
+        if (!options?.skipHistory) {
+          setHistory((prevHistory) => {
+            const historyUpToCurrent = prevHistory.slice(0, currentHistoryIndex + 1);
+            let updatedHistory = [...historyUpToCurrent, newLayers];
 
-          if (updatedHistory.length > MAX_HISTORY_LENGTH) {
-            updatedHistory = updatedHistory.slice(updatedHistory.length - MAX_HISTORY_LENGTH);
-          }
-          setCurrentHistoryIndex(updatedHistory.length - 1);
-          return updatedHistory;
-        });
-      }
-      return newLayers;
-    });
-  }, [currentHistoryIndex, MAX_HISTORY_LENGTH]);
+            if (updatedHistory.length > MAX_HISTORY_LENGTH) {
+              updatedHistory = updatedHistory.slice(updatedHistory.length - MAX_HISTORY_LENGTH);
+            }
+            setCurrentHistoryIndex(updatedHistory.length - 1);
+            return updatedHistory;
+          });
+        }
+        return newLayers;
+      });
+    },
+    [currentHistoryIndex, MAX_HISTORY_LENGTH],
+  );
 
-  const {
-    handleInteractionStart,
-    handleInteractionMove,
-    handleInteractionEnd
-  } = useDrawingInteractions({
+  const { handleInteractionStart, handleInteractionMove, handleInteractionEnd } = useDrawingInteractions({
     tool,
     layers,
     setLayers: updateLayersAndHistory,
@@ -115,23 +115,24 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
     }
 
     const initialLayerId = `layer-${Date.now()}`;
-    const offscreenCanvas = document.createElement('canvas');
+    const offscreenCanvas = document.createElement("canvas");
     offscreenCanvas.width = CANVAS_WIDTH;
     offscreenCanvas.height = CANVAS_HEIGHT;
-    const ctx = offscreenCanvas.getContext('2d');
+    const ctx = offscreenCanvas.getContext("2d");
     let initialRasterDataUrl = null;
 
     if (ctx) {
-      ctx.fillStyle = 'white';
+      ctx.fillStyle = "white";
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       initialRasterDataUrl = offscreenCanvas.toDataURL();
     } else {
-      initialRasterDataUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAwAB/mazYAAAAABJRU5ErkJggg==";
+      initialRasterDataUrl =
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAwAB/mazYAAAAABJRU5ErkJggg==";
     }
 
     const initialLayer: UserLayerData = {
       id: initialLayerId,
-      name: 'Layer 1',
+      name: "Layer 1",
       isVisible: true,
       opacity: 1,
       rasterDataUrl: initialRasterDataUrl,
@@ -148,9 +149,9 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   useEffect(() => {
     const newImageElements: { [key: string]: HTMLImageElement } = {};
     let allLoaded = true;
-    let imageLoadPromises: Promise<void>[] = [];
+    const imageLoadPromises: Promise<void>[] = [];
 
-    layers.forEach(layer => {
+    layers.forEach((layer) => {
       if (layer.rasterDataUrl) {
         if (layerImageElements[layer.id] && layerImageElements[layer.id].src === layer.rasterDataUrl) {
           newImageElements[layer.id] = layerImageElements[layer.id];
@@ -177,11 +178,12 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
       Promise.all(imageLoadPromises).then(() => {
         setLayerImageElements(newImageElements);
       });
-    } else if (Object.keys(newImageElements).length !== Object.keys(layerImageElements).length ||
-      !Object.keys(newImageElements).every(key => layerImageElements[key])) {
+    } else if (
+      Object.keys(newImageElements).length !== Object.keys(layerImageElements).length ||
+      !Object.keys(newImageElements).every((key) => layerImageElements[key])
+    ) {
       setLayerImageElements(newImageElements);
     }
-
   }, [layers]);
 
   const handleSetActiveLayer = (layerId: string) => {
@@ -189,19 +191,17 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   };
 
   const handleToggleLayerVisibility = (layerId: string) => {
-    updateLayersAndHistory(prevLayers =>
-      prevLayers.map(l =>
-        l.id === layerId ? { ...l, isVisible: !l.isVisible } : l
-      )
+    updateLayersAndHistory((prevLayers) =>
+      prevLayers.map((l) => (l.id === layerId ? { ...l, isVisible: !l.isVisible } : l)),
     );
   };
 
   const handleAddLayer = () => {
     const newLayerId = `layer-${Date.now()}`;
-    const offscreenCanvas = document.createElement('canvas');
+    const offscreenCanvas = document.createElement("canvas");
     offscreenCanvas.width = CANVAS_WIDTH;
     offscreenCanvas.height = CANVAS_HEIGHT;
-    const ctx = offscreenCanvas.getContext('2d');
+    const ctx = offscreenCanvas.getContext("2d");
     let newRasterDataUrl = null;
 
     if (ctx) {
@@ -209,7 +209,8 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       newRasterDataUrl = offscreenCanvas.toDataURL();
     } else {
-      newRasterDataUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwAB/aurHAAAAABJRU5ErkJggg==";
+      newRasterDataUrl =
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwAB/aurHAAAAABJRU5ErkJggg==";
     }
 
     const newLayer: UserLayerData = {
@@ -220,15 +221,15 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
       rasterDataUrl: newRasterDataUrl,
       vectorShapes: [],
     };
-    updateLayersAndHistory(prevLayers => [...prevLayers, newLayer]);
+    updateLayersAndHistory((prevLayers) => [...prevLayers, newLayer]);
     setActiveLayerId(newLayerId);
   };
 
   const handleDeleteLayer = (layerId: string) => {
-    updateLayersAndHistory(prevLayers => {
-      const newLayers = prevLayers.filter(l => l.id !== layerId);
+    updateLayersAndHistory((prevLayers) => {
+      const newLayers = prevLayers.filter((l) => l.id !== layerId);
       if (activeLayerId === layerId) {
-        const oldIndex = prevLayers.findIndex(l => l.id === layerId);
+        const oldIndex = prevLayers.findIndex((l) => l.id === layerId);
         if (newLayers.length === 0) {
           setActiveLayerId(null);
         } else {
@@ -259,22 +260,22 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const isModKey = event.ctrlKey || event.metaKey;
-      if (isModKey && event.key === 'z') {
+      if (isModKey && event.key === "z") {
         event.preventDefault();
         if (event.shiftKey) {
           handleRedo();
         } else {
           handleUndo();
         }
-      } else if (isModKey && event.key === 'y') {
+      } else if (isModKey && event.key === "y") {
         event.preventDefault();
         handleRedo();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [handleUndo, handleRedo]);
 
@@ -284,9 +285,9 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   const handleReorderLayers = (activeId: string, overId: string | null) => {
     if (!overId) return;
 
-    setLayersInternal(currentLayers => {
-      const oldIndex = currentLayers.findIndex(layer => layer.id === activeId);
-      const newIndex = currentLayers.findIndex(layer => layer.id === overId);
+    setLayersInternal((currentLayers) => {
+      const oldIndex = currentLayers.findIndex((layer) => layer.id === activeId);
+      const newIndex = currentLayers.findIndex((layer) => layer.id === overId);
 
       if (oldIndex === -1 || newIndex === -1) {
         return currentLayers;
@@ -305,9 +306,9 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   };
 
   const handlePublishDrawing = (slug: string) => {
-    console.log('Publishing drawing:', slug);
+    console.log("Publishing drawing:", slug);
     handleClosePublishDialog();
-  }
+  };
 
   return (
     <div className="relative h-screen w-screen bg-background flex flex-col items-center justify-center">
@@ -342,20 +343,14 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
           ref={stageRef}
           className="rounded-md overflow-hidden"
         >
-          {layers.map(layer => {
+          {layers.map((layer) => {
             if (!layer.isVisible) {
               return null;
             }
             const imageElement = layerImageElements[layer.id];
 
             return (
-              <Layer
-                key={layer.id}
-                id={layer.id}
-                opacity={layer.opacity}
-                visible={layer.isVisible}
-                listening={false}
-              >
+              <Layer key={layer.id} id={layer.id} opacity={layer.opacity} visible={layer.isVisible} listening={false}>
                 {imageElement && layer.rasterDataUrl && (
                   <KonvaImage
                     image={imageElement}
@@ -367,8 +362,8 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
                     opacity={1}
                   />
                 )}
-                {layer.vectorShapes.map(shape => {
-                  if (shape.tool === 'pen' || shape.tool === 'eraser') {
+                {layer.vectorShapes.map((shape) => {
+                  if (shape.tool === "pen" || shape.tool === "eraser") {
                     return (
                       <Line
                         key={shape.id}
@@ -418,12 +413,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.2 }}
       >
-        <HistoryControls
-          onUndo={handleUndo}
-          onRedo={handleRedo}
-          canUndo={canUndo}
-          canRedo={canRedo}
-        />
+        <HistoryControls onUndo={handleUndo} onRedo={handleRedo} canUndo={canUndo} canRedo={canRedo} />
       </motion.div>
       <motion.div
         className="absolute bottom-4 right-4 z-10"
@@ -431,7 +421,9 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.3 }}
       >
-        <Button variant="secondary" onClick={handleOpenPublishDialog}>Finish</Button>
+        <Button variant="secondary" onClick={handleOpenPublishDialog}>
+          Finish
+        </Button>
       </motion.div>
       <AutoSave
         layers={layers}
@@ -451,4 +443,4 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
       />
     </div>
   );
-} 
+}

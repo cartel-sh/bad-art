@@ -1,15 +1,15 @@
 "use client";
 
-import { Post, ImageMetadata } from "@lens-protocol/client";
-import { Heart, MessageCircle, Repeat, Brush, GitPullRequest, GitBranchIcon, GitFork } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { resolveUrl } from "@/lib/resolve-url";
-import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
-import { UserLayerData } from "@/lib/types";
-import { toast } from "sonner";
 import { createDraftDrawing } from "@/lib/drawing-utils";
+import { resolveUrl } from "@/lib/resolve-url";
+import { UserLayerData } from "@/lib/types";
+import { ImageMetadata, Post } from "@lens-protocol/client";
+import { Brush, GitBranchIcon, GitFork, GitPullRequest, Heart, MessageCircle, Repeat } from "lucide-react";
+import { motion } from "motion/react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface SidebarProps {
   post?: Post;
@@ -46,12 +46,11 @@ export default function Sidebar({ post }: SidebarProps) {
   const router = useRouter();
   const metadata = post?.metadata as ImageMetadata;
   const authorPictureRaw = post?.author.metadata?.picture;
-  const authorDisplayName = post?.author.metadata?.name || post?.author.username?.localName || post?.author.address.substring(0, 6);
+  const authorDisplayName =
+    post?.author.metadata?.name || post?.author.username?.localName || post?.author.address.substring(0, 6);
 
-  const fileAttribute = metadata?.attributes?.find(
-    (attr) => attr.key === 'file'
-  );
-  const canDerive = fileAttribute && typeof fileAttribute.value === 'string' && fileAttribute.value.trim() !== '';
+  const fileAttribute = metadata?.attributes?.find((attr) => attr.key === "file");
+  const canDerive = fileAttribute && typeof fileAttribute.value === "string" && fileAttribute.value.trim() !== "";
 
   return (
     <motion.div
@@ -63,7 +62,7 @@ export default function Sidebar({ post }: SidebarProps) {
     >
       <div className="mb-auto space-y-4">
         {post && metadata && (
-          <div >
+          <div>
             {post.author && (
               <div className="flex items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2">
@@ -81,9 +80,7 @@ export default function Sidebar({ post }: SidebarProps) {
               </div>
             )}
 
-            {metadata.title && (
-              <h2 className="text-2xl font-bold mb-3">{metadata.title}</h2>
-            )}
+            {metadata.title && <h2 className="text-2xl font-bold mb-3">{metadata.title}</h2>}
             {metadata.content && <p className="text-md text-gray-600 dark:text-gray-400 mb-3">{metadata.content}</p>}
 
             <div className="py-12 flex justify-around items-center text-md text-gray-600 dark:text-gray-400">
@@ -124,7 +121,7 @@ export default function Sidebar({ post }: SidebarProps) {
       return;
     }
 
-    if (!fileAttribute || typeof fileAttribute.value !== 'string') {
+    if (!fileAttribute || typeof fileAttribute.value !== "string") {
       toast.error("No derivable layer data found in this post.");
       return;
     }
@@ -132,7 +129,7 @@ export default function Sidebar({ post }: SidebarProps) {
     let layers: UserLayerData[];
     try {
       layers = JSON.parse(fileAttribute.value);
-      if (!Array.isArray(layers) || layers.some(layer => typeof layer.id !== 'string')) {
+      if (!Array.isArray(layers) || layers.some((layer) => typeof layer.id !== "string")) {
         throw new Error("Parsed layer data is not valid.");
       }
     } catch (error) {
@@ -150,4 +147,4 @@ export default function Sidebar({ post }: SidebarProps) {
       toast.error("Failed to save derived drawing locally.");
     }
   }
-} 
+}

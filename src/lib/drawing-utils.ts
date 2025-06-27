@@ -1,27 +1,91 @@
 import { UserLayerData } from "@/lib/types";
 
-export const LOCAL_STORAGE_DRAWINGS_KEY = 'drawings-storage';
+export const LOCAL_STORAGE_DRAWINGS_KEY = "drawings-storage";
 
 const adjectives = [
-  "Sparkling", "Cosmic", "Mystic", "Pixelated", "Dreamy",
-  "Vibrant", "Lunar", "Solar", "Retro", "Futuristic",
-  "Whimsical", "Abstract", "Geometric", "Surreal", "Playful",
-  "Majestic", "Enchanted", "Celestial", "Galactic", "Ethereal",
-  "Cybernetic", "Chromatic", "Holographic", "Quantum", "Mythic",
-  "Neon", "Primal", "Astral", "Iridescent", "Arcane",
-  "Prismatic", "Luminous", "Spectral", "Twilight", "Radiant",
-  "Glitched", "Hypnotic", "Crystalline", "Digital", "Psychedelic",
+  "Sparkling",
+  "Cosmic",
+  "Mystic",
+  "Pixelated",
+  "Dreamy",
+  "Vibrant",
+  "Lunar",
+  "Solar",
+  "Retro",
+  "Futuristic",
+  "Whimsical",
+  "Abstract",
+  "Geometric",
+  "Surreal",
+  "Playful",
+  "Majestic",
+  "Enchanted",
+  "Celestial",
+  "Galactic",
+  "Ethereal",
+  "Cybernetic",
+  "Chromatic",
+  "Holographic",
+  "Quantum",
+  "Mythic",
+  "Neon",
+  "Primal",
+  "Astral",
+  "Iridescent",
+  "Arcane",
+  "Prismatic",
+  "Luminous",
+  "Spectral",
+  "Twilight",
+  "Radiant",
+  "Glitched",
+  "Hypnotic",
+  "Crystalline",
+  "Digital",
+  "Psychedelic",
 ];
 
 const animals = [
-  "Phoenix", "Griffin", "Dragon", "Sphinx", "Pegasus",
-  "Kraken", "Hydra", "Basilisk", "Cerberus", "Chimera",
-  "Robot", "Alien", "Stardust", "Nebula", "Comet",
-  "Unicorn", "Wyvern", "Gorgon", "Minotaur", "Cyclops",
-  "Gryphon", "Manticore", "Leviathan", "Roc", "Fenrir",
-  "Behemoth", "Banshee", "Titan", "Centaur", "Djinn",
-  "Gargoyle", "Nymph", "Wraith", "Triton", "Harpy",
-  "Golem", "Specter", "Kelpie", "Siren", "Automaton",
+  "Phoenix",
+  "Griffin",
+  "Dragon",
+  "Sphinx",
+  "Pegasus",
+  "Kraken",
+  "Hydra",
+  "Basilisk",
+  "Cerberus",
+  "Chimera",
+  "Robot",
+  "Alien",
+  "Stardust",
+  "Nebula",
+  "Comet",
+  "Unicorn",
+  "Wyvern",
+  "Gorgon",
+  "Minotaur",
+  "Cyclops",
+  "Gryphon",
+  "Manticore",
+  "Leviathan",
+  "Roc",
+  "Fenrir",
+  "Behemoth",
+  "Banshee",
+  "Titan",
+  "Centaur",
+  "Djinn",
+  "Gargoyle",
+  "Nymph",
+  "Wraith",
+  "Triton",
+  "Harpy",
+  "Golem",
+  "Specter",
+  "Kelpie",
+  "Siren",
+  "Automaton",
 ];
 
 export const generateRandomString = (length: number): string => {
@@ -33,7 +97,7 @@ export const generateRandomString = (length: number): string => {
   return result;
 };
 
-export const getRandomElement = <T,>(arr: T[]): T => {
+export const getRandomElement = <T>(arr: T[]): T => {
   return arr[Math.floor(Math.random() * arr.length)];
 };
 
@@ -47,7 +111,7 @@ export const generateNewDrawingId = (): string => {
 export const saveDrawingToLocalStorage = (
   drawingId: string,
   layers: UserLayerData[],
-  storageKey: string = LOCAL_STORAGE_DRAWINGS_KEY
+  storageKey: string = LOCAL_STORAGE_DRAWINGS_KEY,
 ): boolean => {
   try {
     const allSavedDrawingsJSON = localStorage.getItem(storageKey);
@@ -72,11 +136,11 @@ export const saveDrawingToLocalStorage = (
 
 export const createDraftDrawing = (
   layers: UserLayerData[],
-  storageKey: string = LOCAL_STORAGE_DRAWINGS_KEY
+  storageKey: string = LOCAL_STORAGE_DRAWINGS_KEY,
 ): string | null => {
   const newDrawingId = generateNewDrawingId();
   if (saveDrawingToLocalStorage(newDrawingId, layers, storageKey)) {
     return newDrawingId;
   }
   return null;
-}; 
+};

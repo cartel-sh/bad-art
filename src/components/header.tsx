@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "motion/react";
-import { usePathname } from "next/navigation";
 import { Noto_Sans, Open_Sans } from "next/font/google";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const geistSans = Noto_Sans({
   variable: "--font-geist-sans",
@@ -13,13 +13,13 @@ const geistSans = Noto_Sans({
 export default function Header() {
   const pathname = usePathname();
 
-  const isSketchPage = pathname?.includes('/sketches');
-  const isDrawPage = pathname?.includes('/draw');
+  const isSketchPage = pathname?.includes("/sketches");
+  const isDrawPage = pathname?.includes("/draw");
 
   const brandText = isSketchPage ? "MY/ART" : "BAD/ART";
 
   if (isDrawPage) {
-    return null
+    return null;
   }
 
   return (
@@ -31,11 +31,7 @@ export default function Header() {
         transition={{ duration: 0.3 }}
       >
         <Link href="/" className="flex items-center gap-2">
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="relative flex items-center"
-          >
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="relative flex items-center">
             <motion.span
               className={`text-4xl font-bold ml-2 italic  -tracking-[4px] ${geistSans.className} uppercase`}
               initial={{ opacity: 0 }}
@@ -49,4 +45,4 @@ export default function Header() {
       </motion.header>
     </>
   );
-} 
+}

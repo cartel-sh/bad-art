@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { UserLayerData } from '@/lib/types';
+import { UserLayerData } from "@/lib/types";
+import { useEffect } from "react";
 
 interface AutoSaveProps {
   layers: UserLayerData[];
@@ -60,4 +60,4 @@ export default function AutoSave({
   }, [layers, drawingId, isLoadedFromStorage, setIsLoadedFromStorage, history, currentHistoryIndex, storageKey]);
 
   return null;
-} 
+}

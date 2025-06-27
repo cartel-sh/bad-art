@@ -1,10 +1,10 @@
-import { getLensClient } from "@/lib/lens/client";
-import { resolveUrl } from "@/lib/resolve-url";
-import { Post, ImageMetadata } from "@lens-protocol/client";
-import { fetchPost } from "@lens-protocol/client/actions";
-import PostView from "@/components/post-view";
 import AuthorInfo from "@/components/author-info";
 import PostInteractions from "@/components/post-interactions";
+import PostView from "@/components/post-view";
+import { getLensClient } from "@/lib/lens/client";
+import { resolveUrl } from "@/lib/resolve-url";
+import { ImageMetadata, Post } from "@lens-protocol/client";
+import { fetchPost } from "@lens-protocol/client/actions";
 
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;
@@ -44,7 +44,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   const operations = {
     hasUpvoted: post?.operations?.hasUpvoted,
     hasReposted: post?.operations?.hasReposted.optimistic,
-  }
+  };
 
   return (
     <div className="flex flex-col w-full min-h-screen items-center justify-center py-8">
@@ -59,4 +59,4 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       </div>
     </div>
   );
-} 
+}

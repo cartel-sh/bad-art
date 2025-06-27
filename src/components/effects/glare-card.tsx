@@ -1,11 +1,11 @@
-import React, { useEffect, useRef } from 'react';
-import '../../styles/card-effects.css';
+import React, { useEffect, useRef } from "react";
+import "../../styles/card-effects.css";
 
 export enum ShineEffect {
-  Holo = 'holo-effect',
-  Crimson = 'crimson-shine-effect',
-  GalaxyHolo = 'galaxy-holo-effect',
-  None = ''
+  Holo = "holo-effect",
+  Crimson = "crimson-shine-effect",
+  GalaxyHolo = "galaxy-holo-effect",
+  None = "",
 }
 
 interface InteractiveImageProps {
@@ -23,12 +23,12 @@ interface InteractiveImageProps {
 const GlareCard: React.FC<InteractiveImageProps> = ({
   imageUrl,
   altText,
-  containerClassName = '',
-  cardClassName = '',
-  imageClassName = '',
-  width = '100%',
-  height = '100%',
-  effectClasses = 'glare-effect',
+  containerClassName = "",
+  cardClassName = "",
+  imageClassName = "",
+  width = "100%",
+  height = "100%",
+  effectClasses = "glare-effect",
   shineEffect = ShineEffect.None,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -61,43 +61,42 @@ const GlareCard: React.FC<InteractiveImageProps> = ({
       const maxDistance = Math.sqrt(Math.pow(centerX, 2) + Math.pow(centerY, 2));
       const hyp = maxDistance > 0 ? distance / maxDistance : 0;
 
-      card.style.setProperty('--mx', `${mouseXPercentage * 100}%`);
-      card.style.setProperty('--my', `${mouseYPercentage * 100}%`);
-      card.style.setProperty('--rx', `${-finalRotateY}deg`);
-      card.style.setProperty('--ry', `${-finalRotateX}deg`);
-      card.style.setProperty('--hyp', `${hyp}`);
-      card.style.setProperty('--o', '1'); // opacity
+      card.style.setProperty("--mx", `${mouseXPercentage * 100}%`);
+      card.style.setProperty("--my", `${mouseYPercentage * 100}%`);
+      card.style.setProperty("--rx", `${-finalRotateY}deg`);
+      card.style.setProperty("--ry", `${-finalRotateX}deg`);
+      card.style.setProperty("--hyp", `${hyp}`);
+      card.style.setProperty("--o", "1"); // opacity
     };
 
     const onMouseLeave = () => {
-      card.style.setProperty('--rx', '0deg');
-      card.style.setProperty('--ry', '0deg');
-      card.style.setProperty('--o', '0');
-      card.style.setProperty('--hyp', '0');
+      card.style.setProperty("--rx", "0deg");
+      card.style.setProperty("--ry", "0deg");
+      card.style.setProperty("--o", "0");
+      card.style.setProperty("--hyp", "0");
     };
 
-    const onMouseDown = () => card.classList.add('active');
-    const onMouseUp = () => card.classList.remove('active');
+    const onMouseDown = () => card.classList.add("active");
+    const onMouseUp = () => card.classList.remove("active");
 
-    card.addEventListener('mousemove', onMouseMove);
-    card.addEventListener('mouseleave', onMouseLeave);
-    card.addEventListener('mousedown', onMouseDown);
-    card.addEventListener('mouseup', onMouseUp);
-    document.addEventListener('mouseup', onMouseUp);
-
+    card.addEventListener("mousemove", onMouseMove);
+    card.addEventListener("mouseleave", onMouseLeave);
+    card.addEventListener("mousedown", onMouseDown);
+    card.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("mouseup", onMouseUp);
 
     return () => {
-      card.removeEventListener('mousemove', onMouseMove);
-      card.removeEventListener('mouseleave', onMouseLeave);
-      card.removeEventListener('mousedown', onMouseDown);
-      card.removeEventListener('mouseup', onMouseUp);
-      document.removeEventListener('mouseup', onMouseUp);
+      card.removeEventListener("mousemove", onMouseMove);
+      card.removeEventListener("mouseleave", onMouseLeave);
+      card.removeEventListener("mousedown", onMouseDown);
+      card.removeEventListener("mouseup", onMouseUp);
+      document.removeEventListener("mouseup", onMouseUp);
 
       if (card) {
-        card.style.setProperty('--rx', '0deg');
-        card.style.setProperty('--ry', '0deg');
-        card.style.setProperty('--o', '0');
-        card.style.setProperty('--hyp', '0');
+        card.style.setProperty("--rx", "0deg");
+        card.style.setProperty("--ry", "0deg");
+        card.style.setProperty("--o", "0");
+        card.style.setProperty("--hyp", "0");
       }
     };
   }, [imageUrl]);
@@ -107,7 +106,7 @@ const GlareCard: React.FC<InteractiveImageProps> = ({
       <div
         ref={cardRef}
         className={`card mouse-effects-enabled ${shineEffect} ${effectClasses} ${cardClassName}`.trim()}
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: "100%", height: "100%" }}
       >
         <div className="card__translater w-full h-full">
           <div className="card__rotator w-full h-full">
@@ -128,4 +127,4 @@ const GlareCard: React.FC<InteractiveImageProps> = ({
   );
 };
 
-export default GlareCard; 
+export default GlareCard;

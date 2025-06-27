@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { motion } from "motion/react";
 import { SkeletonCard } from "@/components/post-skeleton";
-import { UserLayerData, VectorShapeData } from "@/lib/types";
-import Konva from 'konva';
-import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UserLayerData, VectorShapeData } from "@/lib/types";
+import Konva from "konva";
+import { Check } from "lucide-react";
+import { motion } from "motion/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
-const ALL_DRAWINGS_STORAGE_KEY = 'drawings-storage';
+const ALL_DRAWINGS_STORAGE_KEY = "drawings-storage";
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
 
@@ -20,14 +20,10 @@ interface ProcessedSketch {
   name?: string;
 }
 
-async function generateSketchPreview(
-  layers: UserLayerData[],
-  width: number,
-  height: number
-): Promise<string | null> {
+async function generateSketchPreview(layers: UserLayerData[], width: number, height: number): Promise<string | null> {
   if (!layers || layers.length === 0) return null;
 
-  const containerDiv = document.createElement('div');
+  const containerDiv = document.createElement("div");
   // Optionally set dimensions on the container if Konva requires it,
   // but usually stage dimensions are primary.
   // containerDiv.style.width = `${width}px`;
@@ -50,16 +46,16 @@ async function generateSketchPreview(
 
     const addVectorShapesToLayer = () => {
       userLayer.vectorShapes.forEach((shape: VectorShapeData) => {
-        if (shape.tool === 'pen' || shape.tool === 'eraser') {
-          const op = shape.globalCompositeOperation || 'source-over';
+        if (shape.tool === "pen" || shape.tool === "eraser") {
+          const op = shape.globalCompositeOperation || "source-over";
           const line = new Konva.Line({
             points: shape.points,
             stroke: shape.stroke,
             strokeWidth: shape.strokeWidth,
-            lineCap: 'round',
-            lineJoin: 'round',
+            lineCap: "round",
+            lineJoin: "round",
             tension: shape.tension !== undefined ? shape.tension : 0.1,
-            globalCompositeOperation: op as Konva.LineConfig['globalCompositeOperation'],
+            globalCompositeOperation: op as Konva.LineConfig["globalCompositeOperation"],
             perfectDrawEnabled: false,
             listening: false,
           });
@@ -79,7 +75,7 @@ async function generateSketchPreview(
             listening: false,
           });
           konvaLayer.add(konvaImage); // Add raster image first
-          addVectorShapesToLayer();    // Then add vector shapes on top
+          addVectorShapesToLayer(); // Then add vector shapes on top
           resolve();
         };
         img.onerror = () => {
@@ -87,7 +83,7 @@ async function generateSketchPreview(
           addVectorShapesToLayer(); // Still attempt to draw vector shapes
           resolve(); // Resolve anyway to not block preview generation
         };
-        img.src = userLayer.rasterDataUrl || '';
+        img.src = userLayer.rasterDataUrl || "";
       });
       imageLoadPromises.push(promise);
     } else {
@@ -104,9 +100,9 @@ async function generateSketchPreview(
   stage.draw();
 
   const dataURL = stage.toDataURL({
-    mimeType: 'image/png',
+    mimeType: "image/png",
     quality: 0.8, // Adjust quality as needed
-    pixelRatio: 0.5 // Generate a smaller preview, adjust as needed
+    pixelRatio: 0.5, // Generate a smaller preview, adjust as needed
   });
 
   stage.destroy();
@@ -140,7 +136,7 @@ export default function SketchesPage() {
   };
 
   const toggleSketchSelection = (sketchId: string) => {
-    setSelectedSketches(prevSelected => {
+    setSelectedSketches((prevSelected) => {
       const newSelected = new Set(prevSelected);
       if (newSelected.has(sketchId)) {
         newSelected.delete(sketchId);
@@ -158,14 +154,12 @@ export default function SketchesPage() {
       const allSavedDrawingsJSON = localStorage.getItem(ALL_DRAWINGS_STORAGE_KEY);
       if (allSavedDrawingsJSON) {
         const allDrawings: { [key: string]: UserLayerData[] } = JSON.parse(allSavedDrawingsJSON);
-        selectedSketches.forEach(sketchId => {
+        selectedSketches.forEach((sketchId) => {
           delete allDrawings[sketchId];
         });
         localStorage.setItem(ALL_DRAWINGS_STORAGE_KEY, JSON.stringify(allDrawings));
 
-        setSketches(prevSketches =>
-          prevSketches.filter(sketch => !selectedSketches.has(sketch.id))
-        );
+        setSketches((prevSketches) => prevSketches.filter((sketch) => !selectedSketches.has(sketch.id)));
         setSelectedSketches(new Set());
         // Optionally, exit select mode after deletion
         // setSelectMode(false);
@@ -178,7 +172,8 @@ export default function SketchesPage() {
 
   const handleToggleSelectMode = () => {
     setSelectMode(!selectMode);
-    if (selectMode) { // Was true, now turning off
+    if (selectMode) {
+      // Was true, now turning off
       setSelectedSketches(new Set()); // Clear selection when exiting select mode
     }
   };
@@ -207,7 +202,7 @@ export default function SketchesPage() {
           }
 
           const previewUrl = await generateSketchPreview(layers, CANVAS_WIDTH, CANVAS_HEIGHT);
-          const drawingName = layers[0]?.name ? layers[0].name.split(' ')[0] + "..." : drawingId;
+          const drawingName = layers[0]?.name ? layers[0].name.split(" ")[0] + "..." : drawingId;
 
           return {
             id: drawingId,
@@ -216,8 +211,9 @@ export default function SketchesPage() {
           };
         });
 
-        const processedSketches = (await Promise.all(sketchPromises))
-          .filter(sketch => sketch.id) as ProcessedSketch[];
+        const processedSketches = (await Promise.all(sketchPromises)).filter(
+          (sketch) => sketch.id,
+        ) as ProcessedSketch[];
 
         setSketches(processedSketches.reverse()); // Show newest first
       } catch (e: any) {
@@ -249,17 +245,20 @@ export default function SketchesPage() {
   }
 
   if (sketches.length === 0) {
-    return <p className="p-4 text-center">No sketches found. <Link href="/" className="text-primary hover:underline">Start drawing!</Link></p>;
+    return (
+      <p className="p-4 text-center">
+        No sketches found.{" "}
+        <Link href="/" className="text-primary hover:underline">
+          Start drawing!
+        </Link>
+      </p>
+    );
   }
 
   return (
     <div className="container mx-auto px-4 py-8 h-full overflow-y-auto no-scrollbar relative">
       {selectMode && selectedSketches.size > 0 && (
-        <Button
-          onClick={handleDeleteSelected}
-          variant="default"
-          className="fixed top-5 right-26 z-10"
-        >
+        <Button onClick={handleDeleteSelected} variant="default" className="fixed top-5 right-26 z-10">
           Delete Selected ({selectedSketches.size})
         </Button>
       )}
@@ -269,7 +268,7 @@ export default function SketchesPage() {
         variant={selectMode ? "secondary" : "outline"}
         className="fixed top-5 right-4 z-10"
       >
-        {selectMode ? 'Cancel' : 'Select'}
+        {selectMode ? "Cancel" : "Select"}
       </Button>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 max-w-screen-sm mx-auto gap-6 pt-14">
@@ -278,13 +277,9 @@ export default function SketchesPage() {
           const isSelected = selectedSketches.has(sketch.id);
 
           return (
-            <div
-              key={sketch.id}
-              className="no-drag"
-              onClick={(e) => handleCardClick(sketch.id, e)}
-            >
+            <div key={sketch.id} className="no-drag" onClick={(e) => handleCardClick(sketch.id, e)}>
               <div
-                className={`relative cursor-pointer group ${selectMode ? 'cursor-pointer' : 'cursor-default'} select-none no-drag`}
+                className={`relative cursor-pointer group ${selectMode ? "cursor-pointer" : "cursor-default"} select-none no-drag`}
                 draggable="false"
               >
                 {selectMode && isSelected && (
@@ -294,7 +289,7 @@ export default function SketchesPage() {
                 )}
                 <motion.div
                   layoutId={`${sketch.id}`}
-                  className={`select-none no-drag block bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl group-hover:shadow-2xl transition-shadow duration-300 ease-in-out aspect-[1/1] ${selectMode && isSelected ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                  className={`select-none no-drag block bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl group-hover:shadow-2xl transition-shadow duration-300 ease-in-out aspect-[1/1] ${selectMode && isSelected ? "ring-2 ring-primary ring-offset-2" : ""}`}
                   draggable={false}
                   drag={false}
                 >
@@ -323,4 +318,4 @@ export default function SketchesPage() {
       </div>
     </div>
   );
-} 
+}

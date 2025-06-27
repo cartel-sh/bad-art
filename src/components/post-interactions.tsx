@@ -1,16 +1,16 @@
 "use client";
 
-import { Post, ImageMetadata, PostReactionType } from "@lens-protocol/client";
-import { Heart, MessageCircle, Repeat, GitFork } from "lucide-react";
-import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
-import { UserLayerData } from "@/lib/types";
-import { toast } from "sonner";
 import { createDraftDrawing } from "@/lib/drawing-utils";
-import { useCallback, useState, useEffect } from "react";
 import { getLensClient } from "@/lib/lens/client";
-import { addReaction, undoReaction, repost } from "@lens-protocol/client/actions";
+import { UserLayerData } from "@/lib/types";
+import { ImageMetadata, Post, PostReactionType } from "@lens-protocol/client";
+import { addReaction, repost, undoReaction } from "@lens-protocol/client/actions";
+import { GitFork, Heart, MessageCircle, Repeat } from "lucide-react";
+import { motion } from "motion/react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface PostInteractionsProps {
   post?: Post;
@@ -20,20 +20,16 @@ interface PostInteractionsProps {
   };
 }
 
-export default function PostInteractions({
-  post,
-  operations = {},
-}: PostInteractionsProps) {
+export default function PostInteractions({ post, operations = {} }: PostInteractionsProps) {
   const router = useRouter();
   const metadata = post?.metadata as ImageMetadata;
   const stats = post?.stats || { upvotes: 0, reposts: 0, comments: 0 };
   const canRepost = post?.operations?.canRepost?.__typename === "PostOperationValidationPassed";
 
-  const fileAttribute = metadata?.attributes?.find(
-    (attr) => attr.key === 'file'
-  );
-  const canDerive = fileAttribute && typeof fileAttribute.value === 'string' && fileAttribute.value.trim() !== '';
-  const authorDisplayName = post?.author.metadata?.name || post?.author.username?.localName || post?.author.address?.substring(0, 6);
+  const fileAttribute = metadata?.attributes?.find((attr) => attr.key === "file");
+  const canDerive = fileAttribute && typeof fileAttribute.value === "string" && fileAttribute.value.trim() !== "";
+  const authorDisplayName =
+    post?.author.metadata?.name || post?.author.username?.localName || post?.author.address?.substring(0, 6);
 
   const [isLiking, setIsLiking] = useState(false);
   const [isLiked, setIsLiked] = useState(operations?.hasUpvoted || false);
@@ -162,27 +158,35 @@ export default function PostInteractions({
         <div className="flex flex-col space-y-3">
           <div className="flex justify-around items-center text-md text-muted-foreground py-2">
             <div
-              className={`flex items-center space-x-1.5 mx-4 cursor-pointer ${isLiked || isLiking ? 'text-red-500' : 'hover:text-red-500'} transition-colors`}
+              className={`flex items-center space-x-1.5 mx-4 cursor-pointer ${isLiked || isLiking ? "text-red-500" : "hover:text-red-500"} transition-colors`}
               onClick={handleLike}
             >
               <Heart
                 size={20}
-                fill={isLiked || isLiking ? 'currentColor' : 'none'}
-                className={isLiked || isLiking ? 'opacity-50' : ''}
+                fill={isLiked || isLiking ? "currentColor" : "none"}
+                className={isLiked || isLiking ? "opacity-50" : ""}
               />
               <span>{likeCount}</span>
             </div>
             <div
-              className={`flex items-center space-x-1.5 mx-4 cursor-pointer ${isReposted || isReposting ? 'text-green-500' : 'hover:text-green-500'} transition-colors ${!canRepost && !isReposted ? 'cursor-not-allowed opacity-50' : ''}`}
-              onClick={!isReposting && canRepost ? handleRepost : () => {
-                if (!canRepost && !isReposted) {
-                  toast.error(post?.operations?.canRepost?.__typename === 'PostOperationValidationFailed' ? `Reposting not allowed: ${post.operations.canRepost.reason}` : "Reposting not allowed.")
-                }
-              }}
+              className={`flex items-center space-x-1.5 mx-4 cursor-pointer ${isReposted || isReposting ? "text-green-500" : "hover:text-green-500"} transition-colors ${!canRepost && !isReposted ? "cursor-not-allowed opacity-50" : ""}`}
+              onClick={
+                !isReposting && canRepost
+                  ? handleRepost
+                  : () => {
+                      if (!canRepost && !isReposted) {
+                        toast.error(
+                          post?.operations?.canRepost?.__typename === "PostOperationValidationFailed"
+                            ? `Reposting not allowed: ${post.operations.canRepost.reason}`
+                            : "Reposting not allowed.",
+                        );
+                      }
+                    }
+              }
             >
               <Repeat
                 size={20}
-                className={`${isReposted || isReposting ? 'opacity-50' : ''} ${!canRepost && !isReposted ? 'cursor-not-allowed' : ''}`}
+                className={`${isReposted || isReposting ? "opacity-50" : ""} ${!canRepost && !isReposted ? "cursor-not-allowed" : ""}`}
               />
               <span>{repostCount}</span>
             </div>
@@ -211,7 +215,7 @@ export default function PostInteractions({
       return;
     }
 
-    if (!fileAttribute || typeof fileAttribute.value !== 'string') {
+    if (!fileAttribute || typeof fileAttribute.value !== "string") {
       toast.error("No derivable layer data found in this post.");
       return;
     }
@@ -219,7 +223,7 @@ export default function PostInteractions({
     let layers: UserLayerData[];
     try {
       layers = JSON.parse(fileAttribute.value);
-      if (!Array.isArray(layers) || layers.some(layer => typeof layer.id !== 'string')) {
+      if (!Array.isArray(layers) || layers.some((layer) => typeof layer.id !== "string")) {
         throw new Error("Parsed layer data is not valid.");
       }
     } catch (error) {
@@ -237,4 +241,4 @@ export default function PostInteractions({
       toast.error("Failed to save derived drawing locally.");
     }
   }
-} 
+}

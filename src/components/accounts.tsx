@@ -1,20 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import { Account } from "@lens-protocol/client";
-import { useLogin, useAccountsAvailable } from "@lens-protocol/react";
-import { useAccount, useWalletClient } from "wagmi";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogClose
-} from "./ui/dialog";
-import { Button } from "./ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { ScrollArea } from "./ui/scroll-area";
+import { useAccountsAvailable, useLogin } from "@lens-protocol/react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useAccount, useWalletClient } from "wagmi";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Button } from "./ui/button";
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { ScrollArea } from "./ui/scroll-area";
 
 interface AccountSelectorProps {
   open: boolean;
@@ -32,28 +26,32 @@ export function AccountSelector({
   trigger,
 }: AccountSelectorProps) {
   const { data: walletClient } = useWalletClient();
-  const { data: availableAccounts, loading: accountsLoading } = useAccountsAvailable({ managedBy: walletClient?.account.address });
+  const { data: availableAccounts, loading: accountsLoading } = useAccountsAvailable({
+    managedBy: walletClient?.account.address,
+  });
   const { execute: authenticate, loading: authenticateLoading } = useLogin();
   const router = useRouter();
-  const wallet = useAccount()
+  const wallet = useAccount();
 
   const handleSelectAccount = async (account: Account) => {
     if (!walletClient) return;
     try {
-      const isOwner = wallet.address === account.owner
-      const authRequest = isOwner ? {
-        accountOwner: {
-          account: account.address,
-          app: process.env.NEXT_PUBLIC_APP_ADDRESS,
-          owner: walletClient.account.address,
-        }
-      } : {
-        accountManager: {
-          account: account.address,
-          app: process.env.NEXT_PUBLIC_APP_ADDRESS,
-          manager: walletClient.account.address,
-        }
-      }
+      const isOwner = wallet.address === account.owner;
+      const authRequest = isOwner
+        ? {
+            accountOwner: {
+              account: account.address,
+              app: process.env.NEXT_PUBLIC_APP_ADDRESS,
+              owner: walletClient.account.address,
+            },
+          }
+        : {
+            accountManager: {
+              account: account.address,
+              app: process.env.NEXT_PUBLIC_APP_ADDRESS,
+              manager: walletClient.account.address,
+            },
+          };
 
       await authenticate({
         ...authRequest,
@@ -64,9 +62,7 @@ export function AccountSelector({
 
       onOpenChange(false);
 
-      const selectedAccount = availableAccounts?.items.find(acc =>
-        acc.account.address === account.address
-      )?.account;
+      const selectedAccount = availableAccounts?.items.find((acc) => acc.account.address === account.address)?.account;
 
       if (onSuccess) {
         onSuccess(selectedAccount);
@@ -89,11 +85,10 @@ export function AccountSelector({
           <div className="grid grid-cols-3 gap-2">
             {accountsLoading && <div className="text-sm text-muted-foreground col-span-3">Loading accounts...</div>}
             {availableAccounts && availableAccounts.items.length === 0 && (
-              <p className="text-sm text-muted-foreground col-span-3">
-                No Lens profiles found for this wallet.
-              </p>
+              <p className="text-sm text-muted-foreground col-span-3">No Lens profiles found for this wallet.</p>
             )}
-            {availableAccounts && availableAccounts.items.length > 0 && (
+            {availableAccounts &&
+              availableAccounts.items.length > 0 &&
               availableAccounts.items.map((acc) => {
                 const isCurrentAccount = currentAccount ? acc.account.address === currentAccount.address : false;
 
@@ -113,17 +108,14 @@ export function AccountSelector({
                     </Avatar>
                     <span className="text-center truncate w-full text-xs">
                       {acc.account.username?.localName || acc.account.address}
-                      {isCurrentAccount &&
-                        <span className="block text-xs text-muted-foreground">(current)</span>
-                      }
+                      {isCurrentAccount && <span className="block text-xs text-muted-foreground">(current)</span>}
                     </span>
                   </Button>
                 );
-              })
-            )}
+              })}
           </div>
         </ScrollArea>
       </DialogContent>
     </Dialog>
   );
-} 
+}

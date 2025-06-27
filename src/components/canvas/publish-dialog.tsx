@@ -1,23 +1,29 @@
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { getLensClient } from '@/lib/lens/client';
-import { MetadataAttributeType, image, MediaImageMimeType, MetadataLicenseType, mainContentFocus } from "@lens-protocol/metadata";
-import Konva from 'konva';
-import React, { useEffect, useState, useRef } from 'react';
-import { toast } from 'sonner';
-import { useWalletClient } from 'wagmi';
-import GlareCard, { ShineEffect } from '../effects/glare-card';
-import { storageClient } from '@/lib/lens/storage';
-import { MainContentFocus, SessionClient } from '@lens-protocol/client';
-import { fetchPost, post } from '@lens-protocol/client/actions';
-import { handleOperationWith } from '@lens-protocol/client/viem';
-import { ConnectKitButton } from 'connectkit';
-import { useRouter } from 'next/navigation';
-import { UserLayerData } from '@/lib/types';
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { getLensClient } from "@/lib/lens/client";
+import { storageClient } from "@/lib/lens/storage";
+import { UserLayerData } from "@/lib/types";
+import { MainContentFocus, SessionClient } from "@lens-protocol/client";
+import { fetchPost, post } from "@lens-protocol/client/actions";
+import { handleOperationWith } from "@lens-protocol/client/viem";
+import {
+  MediaImageMimeType,
+  MetadataAttributeType,
+  MetadataLicenseType,
+  image,
+  mainContentFocus,
+} from "@lens-protocol/metadata";
+import { ConnectKitButton } from "connectkit";
+import Konva from "konva";
+import { useRouter } from "next/navigation";
+import React, { useEffect, useState, useRef } from "react";
+import { toast } from "sonner";
+import { useWalletClient } from "wagmi";
+import GlareCard, { ShineEffect } from "../effects/glare-card";
 
 const dataURLtoFile = (dataurl: string, filename: string): File | null => {
-  const arr = dataurl.split(',');
+  const arr = dataurl.split(",");
   if (arr.length < 2) {
     return null;
   }
@@ -43,16 +49,10 @@ interface PublishDialogProps {
   layers: UserLayerData[];
 }
 
-const PublishDialog: React.FC<PublishDialogProps> = ({
-  isOpen,
-  onClose,
-  stageRef,
-  onPublish,
-  layers,
-}) => {
-  const [imageDataUrl, setImageDataUrl] = useState<string>('');
+const PublishDialog: React.FC<PublishDialogProps> = ({ isOpen, onClose, stageRef, onPublish, layers }) => {
+  const [imageDataUrl, setImageDataUrl] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [drawingTitle, setDrawingTitle] = useState<string>('');
+  const [drawingTitle, setDrawingTitle] = useState<string>("");
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
   const { data: walletClient } = useWalletClient();
   const router = useRouter();
@@ -60,48 +60,48 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
   useEffect(() => {
     if (isOpen && stageRef.current) {
       setIsGenerating(true);
-      const dataUrl = stageRef.current.toDataURL({ mimeType: 'image/png' });
+      const dataUrl = stageRef.current.toDataURL({ mimeType: "image/png" });
       setImageDataUrl(dataUrl);
       setIsGenerating(false);
     } else {
-      setImageDataUrl('');
+      setImageDataUrl("");
     }
   }, [isOpen, stageRef]);
 
   const handlePublish = async () => {
     if (!imageDataUrl) {
-      toast.error('No image data to publish');
+      toast.error("No image data to publish");
       return;
     }
 
     if (!walletClient) {
-      toast.error('Wallet not connected');
+      toast.error("Wallet not connected");
       return;
     }
 
     setIsPublishing(true);
 
-    const toastId = toast.loading('Starting publication process...');
+    const toastId = toast.loading("Starting publication process...");
 
     try {
-      const file = dataURLtoFile(imageDataUrl, drawingTitle || 'drawing.png');
+      const file = dataURLtoFile(imageDataUrl, drawingTitle || "drawing.png");
       if (!file) {
-        toast.error('Failed to convert image data to file', { id: toastId });
+        toast.error("Failed to convert image data to file", { id: toastId });
         setIsPublishing(false);
         return;
       }
 
       const client = await getLensClient();
       if (!client || !client.isSessionClient) {
-        toast.error('Failed to get lens client - you must be logged in', { id: toastId });
+        toast.error("Failed to get lens client - you must be logged in", { id: toastId });
         setIsPublishing(false);
         return;
       }
 
-      toast.loading('Uploading your drawing...', { id: toastId });
+      toast.loading("Uploading your drawing...", { id: toastId });
 
       const { uri } = await storageClient.uploadFile(file);
-      console.log('Uploaded image to grove storage:', uri);
+      console.log("Uploaded image to grove storage:", uri);
 
       const metadata = image({
         title: drawingTitle || undefined,
@@ -111,60 +111,61 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
           altTag: drawingTitle || undefined,
           license: MetadataLicenseType.CCO,
         },
-        tags: ['drawing', 'art'],
+        tags: ["drawing", "art"],
         attributes: [
           {
             type: MetadataAttributeType.STRING,
-            key: 'category',
-            value: 'Art',
+            key: "category",
+            value: "Art",
           },
           {
             type: MetadataAttributeType.JSON,
-            key: 'file',
+            key: "file",
             value: JSON.stringify(layers),
           },
         ],
       });
 
-      const metadataFile = new File([JSON.stringify(metadata)], 'metadata.json', { type: 'application/json' });
+      const metadataFile = new File([JSON.stringify(metadata)], "metadata.json", { type: "application/json" });
       const { uri: contentUri } = await storageClient.uploadFile(metadataFile);
 
-      toast.loading('Creating post on Lens...', { id: toastId });
-      console.log('Uploaded metadata to grove storage:', contentUri);
+      toast.loading("Creating post on Lens...", { id: toastId });
+      console.log("Uploaded metadata to grove storage:", contentUri);
 
       try {
         if (!client || !client.isSessionClient()) {
-          return
+          return;
         }
 
         const result = await post(client as any, {
           contentUri,
         })
           .andThen(handleOperationWith(walletClient))
-          .andThen((client).waitForTransaction)
-          .andThen((txHash) => fetchPost(client, { txHash }))
+          .andThen(client.waitForTransaction)
+          .andThen((txHash) => fetchPost(client, { txHash }));
 
         if (result.isOk()) {
-          console.log('Post created successfully with tx hash:', result.value);
+          console.log("Post created successfully with tx hash:", result.value);
 
-          toast.success('Drawing published successfully!', { id: toastId });
+          toast.success("Drawing published successfully!", { id: toastId });
 
-          onPublish(result.value?.slug || '');
+          onPublish(result.value?.slug || "");
 
           router.push(`/p/${result.value?.slug}`);
           onClose();
-
         } else {
-          console.error('Failed to create post:', result.error);
+          console.error("Failed to create post:", result.error);
           toast.error(`Failed to publish: ${String(result.error)}`, { id: toastId });
         }
       } catch (error) {
-        console.error('Error in post function:', error);
-        toast.error(`Error in post function: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: toastId });
+        console.error("Error in post function:", error);
+        toast.error(`Error in post function: ${error instanceof Error ? error.message : "Unknown error"}`, {
+          id: toastId,
+        });
       }
     } catch (error) {
-      console.error('Error publishing drawing:', error);
-      toast.error(`Error publishing: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: toastId });
+      console.error("Error publishing drawing:", error);
+      toast.error(`Error publishing: ${error instanceof Error ? error.message : "Unknown error"}`, { id: toastId });
     } finally {
       setIsPublishing(false);
     }
@@ -192,35 +193,31 @@ const PublishDialog: React.FC<PublishDialogProps> = ({
           <div className="flex justify-center items-center aspect-square">
             {isGenerating && <p>Generating preview...</p>}
             {!isGenerating && imageDataUrl && (
-              <GlareCard
-                imageUrl={imageDataUrl}
-                altText="Drawing Preview"
-                shineEffect={ShineEffect.None}
-              />
+              <GlareCard imageUrl={imageDataUrl} altText="Drawing Preview" shineEffect={ShineEffect.None} />
             )}
             {!isGenerating && !imageDataUrl && <p>No preview available.</p>}
           </div>
         </div>
         <DialogFooter>
-          {!walletClient && <ConnectKitButton.Custom >
-            {({ show }) => (
-              <Button
-                type="button"
-                onClick={show}
-                className="w-full mt-4"
-              >
-                Connect Wallet
-              </Button>
-            )}
-          </ConnectKitButton.Custom>}
-          {walletClient && <Button
-            type="button"
-            onClick={handlePublish}
-            className="w-full mt-4"
-            disabled={isGenerating || !imageDataUrl || isPublishing}
-          >
-            {isPublishing ? 'Publishing...' : 'Publish'}
-          </Button>}
+          {!walletClient && (
+            <ConnectKitButton.Custom>
+              {({ show }) => (
+                <Button type="button" onClick={show} className="w-full mt-4">
+                  Connect Wallet
+                </Button>
+              )}
+            </ConnectKitButton.Custom>
+          )}
+          {walletClient && (
+            <Button
+              type="button"
+              onClick={handlePublish}
+              className="w-full mt-4"
+              disabled={isGenerating || !imageDataUrl || isPublishing}
+            >
+              {isPublishing ? "Publishing..." : "Publish"}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

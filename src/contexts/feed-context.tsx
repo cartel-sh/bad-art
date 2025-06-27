@@ -1,7 +1,7 @@
 "use client";
 
-import { Post, AnyPost } from "@lens-protocol/client";
-import { createContext, useContext, useState, ReactNode, useCallback } from "react";
+import { AnyPost, Post } from "@lens-protocol/client";
+import { ReactNode, createContext, useCallback, useContext, useState } from "react";
 
 interface FeedState {
   posts: Post[];
@@ -48,7 +48,7 @@ export const FeedProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const addPosts = useCallback((newPosts: Post[]) => {
-    setPostsState(prevPosts => [...prevPosts, ...newPosts]);
+    setPostsState((prevPosts) => [...prevPosts, ...newPosts]);
   }, []);
 
   const clearFeed = useCallback(() => {
@@ -87,4 +87,4 @@ export const useFeed = (): FeedState => {
     throw new Error("useFeed must be used within a FeedProvider");
   }
   return context;
-}; 
+};

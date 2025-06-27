@@ -8,7 +8,7 @@ import { fetchPosts } from "@lens-protocol/client/actions";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { SkeletonCard } from "./post-skeleton";
 
 const APP = process.env.NEXT_PUBLIC_APP_ADDRESS;
@@ -30,6 +30,24 @@ export function Feed() {
   } = useFeed();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const getSkeletonCount = () => {
+    const screenWidth = window.innerWidth;
+    let columnsPerRow = 1;
+    
+    if (screenWidth >= 768) {
+      columnsPerRow = 3;
+    } else if (screenWidth >= 640) {
+      columnsPerRow = 2;
+    }
+    
+    const remainder = posts.length % columnsPerRow;
+    const itemsToFillCurrentRow = remainder === 0 ? 0 : columnsPerRow - remainder;
+    const additionalRows = 2; // Show 2 additional full rows
+    
+    return itemsToFillCurrentRow + (additionalRows * columnsPerRow);
+  };
 
   useEffect(() => {
     const fromPostView = searchParams.get("from") === "postview";
@@ -80,7 +98,11 @@ export function Feed() {
         const imagePosts = fetchedItems.map((post: AnyPost) => post as Post);
 
         if (currentCursor) {
-          addPosts(imagePosts);
+          const existingIds = new Set(posts.map(p => p.id));
+          const uniqueNewPosts = imagePosts.filter(post => !existingIds.has(post.id));
+          if (uniqueNewPosts.length > 0) {
+            addPosts(uniqueNewPosts);
+          }
         } else {
           setPosts(imagePosts);
         }
@@ -112,6 +134,29 @@ export function Feed() {
       fetchContent(cursor);
     }
   };
+
+  useEffect(() => {
+    if (!sentinelRef.current || !hasMore || loading || !cursor) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMorePosts();
+        }
+      },
+      {
+        rootMargin: '100px',
+      }
+    );
+
+    observer.observe(sentinelRef.current);
+
+    return () => {
+      if (sentinelRef.current) {
+        observer.unobserve(sentinelRef.current);
+      }
+    };
+  }, [hasMore, loading, cursor, posts]);
 
   if (!APP && !loading && posts.length === 0) {
     return (
@@ -164,22 +209,16 @@ export function Feed() {
             </Link>
           );
         })}
+        {loading && posts.length > 0 && (
+          <>
+            {Array.from({ length: getSkeletonCount() }).map((_, index) => (
+              <SkeletonCard key={`loading-${index}`} />
+            ))}
+          </>
+        )}
       </div>
-      {!loading && hasMore && posts.length > 0 && (
-        <div className="flex justify-center mt-10 mb-6">
-          <button
-            onClick={loadMorePosts}
-            disabled={loading}
-            className="px-8 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 disabled:opacity-50"
-          >
-            Load More Images
-          </button>
-        </div>
-      )}
-      {loading && posts.length > 0 && (
-        <div className="flex justify-center mt-10 mb-6">
-          <p>Loading more images...</p>
-        </div>
+      {hasMore && (
+        <div ref={sentinelRef} className="h-10" />
       )}
     </div>
   );

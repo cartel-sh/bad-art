@@ -3,6 +3,7 @@ import { LucideIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import * as React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { GlassEffect } from "./glass-effect";
 
 interface DockProps {
   className?: string;
@@ -14,6 +15,7 @@ interface DockProps {
     customComponent?: React.ReactNode;
     extra?: React.ReactNode;
     variant?: "default" | "secondary" | "primary";
+    isActive?: boolean;
   }[];
 }
 
@@ -26,6 +28,7 @@ interface DockIconButtonProps {
   customComponent?: React.ReactNode;
   extra?: React.ReactNode;
   variant?: "default" | "secondary" | "primary";
+  isActive?: boolean;
   onHover?: () => void;
   onLeave?: () => void;
   buttonRef?: React.RefObject<HTMLButtonElement>;
@@ -42,6 +45,7 @@ const DockIconButton = React.forwardRef<HTMLButtonElement, DockIconButtonProps>(
       customComponent,
       extra,
       variant = "default",
+      isActive,
       onHover,
       onLeave,
     },
@@ -52,8 +56,8 @@ const DockIconButton = React.forwardRef<HTMLButtonElement, DockIconButtonProps>(
     }
 
     const variantClasses = {
-      default: "hover:bg-secondary",
-      secondary: "bg-secondary hover:bg-primary hover:text-primary-foreground",
+      default: "hover:bg-secondary/50",
+      secondary: "bg-secondary/50 hover:bg-primary hover:text-primary-foreground",
       primary: "bg-primary text-primary-foreground hover:bg-primary/90",
     };
 
@@ -66,16 +70,17 @@ const DockIconButton = React.forwardRef<HTMLButtonElement, DockIconButtonProps>(
         onMouseEnter={onHover}
         onMouseLeave={onLeave}
         className={cn(
-          "relative group p-3 rounded-lg w-12 h-12 flex items-center justify-center",
+          "relative group p-3 rounded-2xl w-12 h-12 md:w-14 md:h-14 flex items-center justify-center",
           "transition-colors",
+          isActive ? "text-primary" : "text-muted-foreground/60",
           variantClasses[variant],
           className,
         )}
       >
         {customIcon ? (
-          <div className="w-5 h-5 flex items-center justify-center">{customIcon}</div>
+          <div className={cn("w-5 h-5 md:w-6 md:h-6 flex items-center justify-center")}>{customIcon}</div>
         ) : Icon ? (
-          <Icon className="w-5 h-5" />
+          <Icon className={cn("w-5 h-5 md:w-6 md:h-6")} strokeWidth={2.25} />
         ) : null}
       </motion.button>
     );
@@ -87,7 +92,7 @@ const Dock = React.forwardRef<HTMLDivElement, DockProps>(({ items, className }, 
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [showExtra, setShowExtra] = useState(false);
   const [previousIndex, setPreviousIndex] = useState<number | null>(null);
-  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const hideTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const buttonRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const handleMouseEnter = useCallback(
@@ -107,7 +112,7 @@ const Dock = React.forwardRef<HTMLDivElement, DockProps>(({ items, className }, 
       setShowExtra(false);
       setHoveredIndex(null);
       setPreviousIndex(null);
-    }, 200);
+    }, 200); // 0.2s delay
   }, []);
 
   const handleExtraMouseEnter = useCallback(() => {
@@ -121,7 +126,7 @@ const Dock = React.forwardRef<HTMLDivElement, DockProps>(({ items, className }, 
       setShowExtra(false);
       setHoveredIndex(null);
       setPreviousIndex(null);
-    }, 200);
+    }, 200); // 0.2s delay
   }, []);
 
   useEffect(() => {
@@ -157,10 +162,9 @@ const Dock = React.forwardRef<HTMLDivElement, DockProps>(({ items, className }, 
       <motion.div
         layout
         className={cn(
-          "relative flex items-center gap-2 p-2 rounded-2xl w-full",
+          "relative flex items-center gap-2 md:gap-3 p-2 rounded-2xl w-full",
           "flex-row justify-around sm:flex-col sm:justify-center sm:w-auto",
-          "shadow-lg",
-          "glass",
+          // "shadow-lg",
         )}
       >
         <AnimatePresence mode="popLayout">
@@ -199,22 +203,30 @@ const Dock = React.forwardRef<HTMLDivElement, DockProps>(({ items, className }, 
                 }}
                 onMouseEnter={handleExtraMouseEnter}
                 onMouseLeave={handleExtraMouseLeave}
-                className={cn("shadow-lg rounded-xl", "glass glass-dim")}
               >
-                <motion.div
-                  key={hoveredIndex}
-                  initial={{ y: getContentAnimationY(), opacity: 0.7 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                <GlassEffect
+                  className="rounded-xl border text-popover-foreground shadow-md overflow-hidden"
+                  initial={{ scale: 0.95 }}
+                  animate={{ scale: 1 }}
+                  transition={{
+                    scale: { type: "spring", damping: 25, stiffness: 400 },
+                  }}
                 >
-                  {hoveredItem.extra ? (
-                    <div className="w-auto">{hoveredItem.extra}</div>
-                  ) : (
-                    <div className="px-3 py-2 text-sm font-medium text-foreground whitespace-nowrap">
-                      {hoveredItem.label}
-                    </div>
-                  )}
-                </motion.div>
+                  <motion.div
+                    key={hoveredIndex}
+                    initial={{ y: getContentAnimationY(), opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.1 }}
+                  >
+                    {hoveredItem.extra ? (
+                      hoveredItem.extra
+                    ) : (
+                      <div className="px-3 py-2 text-base select-none font-medium text-muted-foreground whitespace-nowrap">
+                        {hoveredItem.label}
+                      </div>
+                    )}
+                    </motion.div>
+                </GlassEffect>
               </motion.div>
             </div>
           )}

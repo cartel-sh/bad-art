@@ -8,7 +8,11 @@ import { Loader2Icon, LogInIcon, User2Icon } from "lucide-react";
 import { useState } from "react";
 import { AccountSelector } from "./accounts";
 
-export function Login() {
+interface LoginProps {
+  [key: `data-${string}`]: boolean;
+}
+
+export function Login(props: LoginProps = {}) {
   const [showAccountSelector, setShowAccountSelector] = useState(true);
   const { data: authenticatedUser, loading: authUserLoading } = useAuthenticatedUser();
 
@@ -18,7 +22,7 @@ export function Login() {
         {({ isConnected: isWalletConnected, show, truncatedAddress, ensName, chain }) => {
           if (!isWalletConnected) {
             return (
-              <Button onClick={show} variant="ghost" className="w-full">
+              <Button onClick={show} variant="ghost" className="w-full" {...props}>
                 <LogInIcon className="w-4 h-4 " strokeWidth={3} />
               </Button>
             );

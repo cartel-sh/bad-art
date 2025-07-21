@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { getLensClient } from "@/lib/lens/client";
 import { storageClient } from "@/lib/lens/storage";
 import { UserLayerData } from "@/lib/types";
-import { MainContentFocus, postId, SessionClient } from "@lens-protocol/client";
+import { MainContentFocus, postId, SessionClient, evmAddress } from "@lens-protocol/client";
 import { fetchPost, post } from "@lens-protocol/client/actions";
 import { handleOperationWith } from "@lens-protocol/client/viem";
 import {
@@ -21,6 +21,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import { useWalletClient } from "wagmi";
 import GlareCard, { ShineEffect } from "../effects/glare-card";
+import { useAuthenticatedUser } from "@lens-protocol/react";
 
 const dataURLtoFile = (dataurl: string, filename: string): File | null => {
   const arr = dataurl.split(",");
@@ -60,9 +61,11 @@ const PublishDialog: React.FC<PublishDialogProps> = ({ isOpen, onClose, stageRef
   const [imageDataUrl, setImageDataUrl] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [drawingTitle, setDrawingTitle] = useState<string>("");
+  const [price, setPrice] = useState<string>("");
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
   const { data: walletClient } = useWalletClient();
   const router = useRouter();
+  const { data: user } = useAuthenticatedUser()
 
   useEffect(() => {
     if (isOpen && stageRef.current) {
@@ -164,17 +167,32 @@ const PublishDialog: React.FC<PublishDialogProps> = ({ isOpen, onClose, stageRef
           return;
         }
 
-        const postOptions: any = {
+        const result = await post(client as any, {
           contentUri,
-        };
-        
-        if (derivedFromPostId) {
-          postOptions.quoteOf = {
-            post: postId(derivedFromPostId),
-          };
-        }
-        
-        const result = await post(client as any, postOptions)
+          ...(derivedFromPostId && {
+            quoteOf: {
+              post: postId(derivedFromPostId),
+            },
+          }),
+          actions: [
+            {
+              simpleCollect: {
+                collectLimit: 1,
+                ...(parseFloat(price) > 0 ? {
+                  payToCollect: {
+                    native: price,
+                    recipients: [
+                      {
+                        address: user?.address,
+                        percent: 100,
+                      },
+                    ],
+                  }
+                } : { payToCollect: undefined }),
+              },
+            },
+          ],
+        })
           .andThen(handleOperationWith(walletClient))
           .andThen(client.waitForTransaction)
           .andThen((txHash) => fetchPost(client, { txHash }));
@@ -231,6 +249,24 @@ const PublishDialog: React.FC<PublishDialogProps> = ({ isOpen, onClose, stageRef
               <GlareCard imageUrl={imageDataUrl} altText="Drawing Preview" shineEffect={ShineEffect.None} />
             )}
             {!isGenerating && !imageDataUrl && <p>No preview available.</p>}
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="price" className="text-sm text-muted-foreground">
+              Piece Price (optional)
+            </label>
+            <div className="relative">
+              <Input
+                id="price"
+                type="number"
+                step="0.01"
+                min="0"
+                value={price}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrice(e.target.value)}
+                className="w-full pl-8"
+                placeholder="0.00"
+              />
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+            </div>
           </div>
         </div>
         <DialogFooter>

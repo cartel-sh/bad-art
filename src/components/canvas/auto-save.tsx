@@ -1,4 +1,4 @@
-import { UserLayerData } from "@/lib/types";
+import { UserLayerData, DrawingMetadata, DrawingData } from "@/lib/types";
 import { useEffect } from "react";
 
 interface AutoSaveProps {
@@ -9,6 +9,7 @@ interface AutoSaveProps {
   history: UserLayerData[][];
   currentHistoryIndex: number;
   storageKey: string;
+  metadata?: DrawingMetadata;
 }
 
 export default function AutoSave({
@@ -19,6 +20,7 @@ export default function AutoSave({
   history,
   currentHistoryIndex,
   storageKey,
+  metadata,
 }: AutoSaveProps) {
   useEffect(() => {
     if (!drawingId || !layers.length) {
@@ -38,7 +40,7 @@ export default function AutoSave({
     if (history.length > 0 && currentHistoryIndex >= 0) {
       try {
         const allSavedDrawingsJSON = localStorage.getItem(storageKey);
-        let allDrawings: { [key: string]: UserLayerData[] } = {};
+        let allDrawings: { [key: string]: any } = {};
 
         if (allSavedDrawingsJSON) {
           try {
@@ -49,7 +51,12 @@ export default function AutoSave({
           }
         }
 
-        allDrawings[drawingId] = layers;
+        const drawingData: DrawingData = {
+          layers,
+          metadata,
+        };
+        
+        allDrawings[drawingId] = drawingData;
 
         console.log(`Auto-saving drawing ${drawingId} to ${storageKey}`);
         localStorage.setItem(storageKey, JSON.stringify(allDrawings));
@@ -57,7 +64,7 @@ export default function AutoSave({
         console.error(`Failed to save drawing ${drawingId} to localStorage (key: ${storageKey})`, error);
       }
     }
-  }, [layers, drawingId, isLoadedFromStorage, setIsLoadedFromStorage, history, currentHistoryIndex, storageKey]);
+  }, [layers, drawingId, isLoadedFromStorage, setIsLoadedFromStorage, history, currentHistoryIndex, storageKey, metadata]);
 
   return null;
 }

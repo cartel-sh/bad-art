@@ -1,6 +1,6 @@
 import { UpdateHistoryOptions } from "@/app/draw/[id]/page";
-import { colorsMatch, getPointerPosition, performFloodFill } from "@/lib/drawing";
-import { ToolbarTool, UserLayerData, VectorShapeData } from "@/lib/types";
+import { colorsMatch, getPointerPosition, performFloodFill, getPixelPerfectLine } from "@/lib/drawing";
+import { ToolbarTool, UserLayerData, VectorShapeData, CanvasType } from "@/lib/types";
 import Color from "color";
 import Konva from "konva";
 import { useCallback, useEffect, useRef } from "react";
@@ -17,6 +17,8 @@ interface UseDrawingInteractionsProps {
   tolerance: number;
   strokeWidth: number;
   stageRef: React.RefObject<Konva.Stage | null>;
+  gridSize?: number;
+  canvasType: CanvasType;
 }
 
 export const useDrawingInteractions = ({
@@ -29,6 +31,8 @@ export const useDrawingInteractions = ({
   tolerance,
   strokeWidth,
   stageRef,
+  gridSize,
+  canvasType,
 }: UseDrawingInteractionsProps) => {
   const isDrawing = useRef(false);
   const offscreenCtxRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -49,22 +53,55 @@ export const useDrawingInteractions = ({
       }
 
       stage.setPointersPositions(event); // Update Konva's internal pointer positions
-      const pos = stage.getPointerPosition(); // Now call without arguments
-      const line = currentKonvaLineRef.current;
+      const pos = getPointerPosition(stage, gridSize);
+      const element = currentKonvaLineRef.current;
 
-      if (!pos || !line) return;
+      if (!pos || !element) return;
 
-      const newPoints = line.points().concat([pos.x, pos.y]);
-      line.points(newPoints);
+      if (canvasType === "pixel" && gridSize) {
+        // For pixel art, add individual pixels
+        const pixelGroup = element as Konva.Group;
+        const pixelSize = 500 / gridSize;
+        const pixelX = Math.floor(pos.x / pixelSize) * pixelSize;
+        const pixelY = Math.floor(pos.y / pixelSize) * pixelSize;
+        
+        // Check if we already have a pixel at this position
+        const children = pixelGroup.getChildren();
+        const exists = children.some(child => {
+          const rect = child as Konva.Rect;
+          return rect.x() === pixelX && rect.y() === pixelY;
+        });
+        
+        if (!exists) {
+          // Add new pixel
+          const pixel = new Konva.Rect({
+            x: pixelX,
+            y: pixelY,
+            width: pixelSize,
+            height: pixelSize,
+            fill: (element.getChildren()[0] as Konva.Rect).fill(),
+            listening: false,
+            perfectDrawEnabled: false,
+            globalCompositeOperation: (element.getChildren()[0] as Konva.Rect).globalCompositeOperation(),
+          });
+          
+          pixelGroup.add(pixel);
+        }
+      } else {
+        // Regular line drawing
+        const line = element as Konva.Line;
+        const newPoints = line.points().concat([pos.x, pos.y]);
+        line.points(newPoints);
+      }
 
-      const layer = line.getLayer();
+      const layer = element.getLayer();
       if (layer) {
         layer.batchDraw();
       } else {
         stage.batchDraw();
       }
     },
-    [stageRef, activeLayerId, tool],
+    [stageRef, activeLayerId, tool, gridSize, canvasType],
   );
 
   // Define handleInteractionEnd first as handleGlobalPointerUp depends on it.
@@ -80,23 +117,61 @@ export const useDrawingInteractions = ({
     window.removeEventListener("touchend", handleGlobalPointerUp); // This will refer to the handleGlobalPointerUp defined below
 
     if ((tool === "pen" || tool === "eraser") && isDrawing.current && currentKonvaLineRef.current && activeLayerId) {
-      const liveLine = currentKonvaLineRef.current;
-      const newShapeData: VectorShapeData = {
-        id: liveLine.id(),
-        tool: tool,
-        points: liveLine.points(),
-        stroke: liveLine.stroke() as string,
-        strokeWidth: liveLine.strokeWidth(),
-        globalCompositeOperation: liveLine.globalCompositeOperation() as GlobalCompositeOperation,
-        tension: liveLine.tension(),
-      };
+      const element = currentKonvaLineRef.current;
+      
+      if (canvasType === "pixel" && element instanceof Konva.Group) {
+        // Save pixel group
+        const pixelData: { x: number; y: number; width: number; height: number }[] = [];
+        const children = element.getChildren();
+        
+        children.forEach(child => {
+          const rect = child as Konva.Rect;
+          pixelData.push({
+            x: rect.x(),
+            y: rect.y(),
+            width: rect.width(),
+            height: rect.height(),
+          });
+        });
+        
+        if (pixelData.length > 0) {
+          const firstPixel = children[0] as Konva.Rect;
+          const newShapeData: VectorShapeData = {
+            id: element.id(),
+            tool: tool,
+            type: "pixels",
+            pixels: pixelData,
+            stroke: firstPixel.fill() as string,
+            strokeWidth: firstPixel.width(),
+            globalCompositeOperation: firstPixel.globalCompositeOperation() as GlobalCompositeOperation,
+          };
+          
+          setLayers((prevLayers) =>
+            prevLayers.map((l) => (l.id === activeLayerId ? { ...l, vectorShapes: [...l.vectorShapes, newShapeData] } : l)),
+          );
+        }
+      } else if (element instanceof Konva.Line) {
+        // Save regular line
+        const newShapeData: VectorShapeData = {
+          id: element.id(),
+          tool: tool,
+          type: "line",
+          points: element.points(),
+          stroke: element.stroke() as string,
+          strokeWidth: element.strokeWidth(),
+          globalCompositeOperation: element.globalCompositeOperation() as GlobalCompositeOperation,
+          tension: element.tension(),
+          lineCap: element.lineCap() as CanvasLineCap,
+          lineJoin: element.lineJoin() as CanvasLineJoin,
+        };
+        
+        setLayers((prevLayers) =>
+          prevLayers.map((l) => (l.id === activeLayerId ? { ...l, vectorShapes: [...l.vectorShapes, newShapeData] } : l)),
+        );
+      }
 
-      setLayers((prevLayers) =>
-        prevLayers.map((l) => (l.id === activeLayerId ? { ...l, vectorShapes: [...l.vectorShapes, newShapeData] } : l)),
-      );
-
-      if (liveLine) {
-        liveLine.destroy();
+      if (element) {
+        element.destroy();
       }
     }
 
@@ -114,7 +189,7 @@ export const useDrawingInteractions = ({
   const handleInteractionStart = useCallback(
     async (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
       const stage = stageRef.current;
-      const pos = getPointerPosition(stage);
+      const pos = getPointerPosition(stage, gridSize);
 
       if (!pos || !activeLayerId || !stage) return;
 
@@ -147,21 +222,53 @@ export const useDrawingInteractions = ({
           }
 
           const lineId = uuidv4();
-          const konvaLine = new Konva.Line({
-            id: lineId,
-            points: [pos.x, pos.y, pos.x, pos.y],
-            stroke: strokeColor,
-            strokeWidth: strokeWidth,
-            lineCap: "round",
-            lineJoin: "round",
-            tension: 0.1,
-            globalCompositeOperation: tool === "pen" ? "source-over" : "destination-out",
-            perfectDrawEnabled: false,
-            listening: false,
-          });
-
-          targetLayer.add(konvaLine);
-          currentKonvaLineRef.current = konvaLine;
+          const isPixelMode = canvasType === "pixel";
+          
+          if (isPixelMode && gridSize) {
+            // For pixel art, create a group to hold individual pixel rectangles
+            const pixelGroup = new Konva.Group({
+              id: lineId,
+              listening: false,
+            });
+            
+            const pixelSize = 500 / gridSize;
+            const pixelX = Math.floor(pos.x / pixelSize) * pixelSize;
+            const pixelY = Math.floor(pos.y / pixelSize) * pixelSize;
+            
+            // Add first pixel
+            const pixel = new Konva.Rect({
+              x: pixelX,
+              y: pixelY,
+              width: pixelSize,
+              height: pixelSize,
+              fill: strokeColor,
+              listening: false,
+              perfectDrawEnabled: false,
+              globalCompositeOperation: tool === "pen" ? "source-over" : "destination-out",
+            });
+            
+            pixelGroup.add(pixel);
+            targetLayer.add(pixelGroup);
+            currentKonvaLineRef.current = pixelGroup as any; // Store group reference
+          } else {
+            // Regular drawing mode
+            const konvaLine = new Konva.Line({
+              id: lineId,
+              points: [pos.x, pos.y, pos.x, pos.y],
+              stroke: strokeColor,
+              strokeWidth: strokeWidth,
+              lineCap: "round",
+              lineJoin: "round",
+              tension: 0.1,
+              globalCompositeOperation: tool === "pen" ? "source-over" : "destination-out",
+              perfectDrawEnabled: false,
+              listening: false,
+            });
+            
+            targetLayer.add(konvaLine);
+            currentKonvaLineRef.current = konvaLine;
+          }
+          
           targetLayer.batchDraw();
 
           // Add window event listeners for pen/eraser
@@ -222,6 +329,8 @@ export const useDrawingInteractions = ({
       setLayers,
       handleGlobalPointerMove,
       handleGlobalPointerUp,
+      gridSize,
+      canvasType,
     ],
   );
 
@@ -355,18 +464,36 @@ async function renderVectorShapesToContext(
 
   shapes.forEach((shapeData) => {
     if (shapeData.tool === "pen" || shapeData.tool === "eraser") {
-      const line = new Konva.Line({
-        points: shapeData.points,
-        stroke: shapeData.stroke,
-        strokeWidth: shapeData.strokeWidth,
-        lineCap: "round",
-        lineJoin: "round",
-        tension: shapeData.tension || 0, // Default tension if not set
-        globalCompositeOperation: shapeData.globalCompositeOperation,
-        perfectDrawEnabled: false,
-        listening: false,
-      });
-      tempLayer.add(line);
+      if (shapeData.type === "pixels" && shapeData.pixels) {
+        // Render pixels
+        shapeData.pixels.forEach(pixel => {
+          const rect = new Konva.Rect({
+            x: pixel.x,
+            y: pixel.y,
+            width: pixel.width,
+            height: pixel.height,
+            fill: shapeData.stroke,
+            globalCompositeOperation: shapeData.globalCompositeOperation,
+            perfectDrawEnabled: false,
+            listening: false,
+          });
+          tempLayer.add(rect);
+        });
+      } else if (shapeData.points) {
+        // Render line
+        const line = new Konva.Line({
+          points: shapeData.points,
+          stroke: shapeData.stroke,
+          strokeWidth: shapeData.strokeWidth,
+          lineCap: shapeData.lineCap || "round",
+          lineJoin: shapeData.lineJoin || "round",
+          tension: shapeData.tension || 0, // Default tension if not set
+          globalCompositeOperation: shapeData.globalCompositeOperation,
+          perfectDrawEnabled: false,
+          listening: false,
+        });
+        tempLayer.add(line);
+      }
     }
     // Extend here for other vector shape types if any
   });

@@ -1,13 +1,19 @@
 export type ToolbarTool = "pen" | "eraser" | "bucket";
 
+export type CanvasType = "regular" | "pixel";
+
 export interface VectorShapeData {
   id: string;
   tool: "pen" | "eraser";
-  points: number[];
+  type?: "line" | "pixels";
+  points?: number[];
+  pixels?: { x: number; y: number; width: number; height: number }[];
   stroke: string;
   strokeWidth: number;
   globalCompositeOperation: GlobalCompositeOperation;
   tension?: number;
+  lineCap?: CanvasLineCap;
+  lineJoin?: CanvasLineJoin;
 }
 
 export interface UserLayerData {
@@ -17,4 +23,14 @@ export interface UserLayerData {
   opacity: number;
   rasterDataUrl: string | null;
   vectorShapes: VectorShapeData[];
+}
+
+export interface DrawingMetadata {
+  canvasType: CanvasType;
+  gridSize?: number;
+}
+
+export interface DrawingData {
+  layers: UserLayerData[];
+  metadata?: DrawingMetadata;
 }

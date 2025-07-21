@@ -6,14 +6,16 @@ import PublishDialog from "@/components/canvas/publish-dialog";
 import { Button } from "@/components/ui/button";
 import { useDrawingInteractions } from "@/hooks/use-interactions";
 import { colorsMatch, getPointerPosition } from "@/lib/drawing";
-import { ToolbarTool, UserLayerData } from "@/lib/types";
+import { ToolbarTool, UserLayerData, CanvasType, DrawingMetadata } from "@/lib/types";
 import { arrayMove } from "@dnd-kit/sortable";
 import Konva from "konva";
 import { Redo, Undo } from "lucide-react";
 import { motion } from "motion/react";
 import React, { useState, useRef, useEffect, use, useCallback } from "react";
 import { Image as KonvaImage, Layer, Line, Rect, Stage } from "react-konva";
+import { useSearchParams } from "next/navigation";
 import AutoSave from "../../../components/canvas/auto-save";
+import { PixelGrid } from "../../../components/canvas/pixel-grid";
 import Toolbar, { Tool as ToolbarUITool } from "../../../components/canvas/toolbar";
 
 const CANVAS_WIDTH = 500;
@@ -25,7 +27,15 @@ export interface UpdateHistoryOptions {
 
 export default function DrawPage({ params }: { params: Promise<{ id: string }> }) {
   const props = use(params);
+  const searchParams = useSearchParams();
+  const canvasType = (searchParams.get("type") as CanvasType) || "regular";
+  const gridSize = parseInt(searchParams.get("gridSize") || "25", 10);
+  
   const [tool, setTool] = useState<ToolbarUITool>("pen");
+  const [drawingMetadata, setDrawingMetadata] = useState<DrawingMetadata>({
+    canvasType,
+    gridSize: canvasType === "pixel" ? gridSize : undefined,
+  });
 
   const [layers, setLayersInternal] = useState<UserLayerData[]>([]);
   const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
@@ -85,6 +95,8 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
     tolerance,
     strokeWidth,
     stageRef,
+    gridSize: drawingMetadata.canvasType === "pixel" ? drawingMetadata.gridSize : undefined,
+    canvasType: drawingMetadata.canvasType,
   });
 
   useEffect(() => {
@@ -92,7 +104,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
 
     const drawingId = props.id;
     const allSavedDrawingsJSON = localStorage.getItem(ALL_DRAWINGS_STORAGE_KEY);
-    let allDrawings: { [key: string]: UserLayerData[] } = {};
+    let allDrawings: { [key: string]: any } = {};
 
     if (allSavedDrawingsJSON) {
       try {
@@ -102,14 +114,28 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
       }
     }
 
-    const savedLayersForCurrentDrawing = allDrawings[drawingId];
+    const savedDrawing = allDrawings[drawingId];
+    let savedLayers: UserLayerData[] | null = null;
+    let savedMetadata: DrawingMetadata | null = null;
 
-    if (savedLayersForCurrentDrawing && savedLayersForCurrentDrawing.length > 0) {
-      setLayersInternal(savedLayersForCurrentDrawing);
-      setHistory([savedLayersForCurrentDrawing]);
+    if (savedDrawing) {
+      if (Array.isArray(savedDrawing)) {
+        savedLayers = savedDrawing;
+      } else if (savedDrawing.layers) {
+        savedLayers = savedDrawing.layers;
+        savedMetadata = savedDrawing.metadata;
+      }
+    }
+
+    if (savedLayers && savedLayers.length > 0) {
+      setLayersInternal(savedLayers);
+      setHistory([savedLayers]);
       setCurrentHistoryIndex(0);
-      setActiveLayerId(savedLayersForCurrentDrawing[savedLayersForCurrentDrawing.length - 1]?.id || null);
+      setActiveLayerId(savedLayers[savedLayers.length - 1]?.id || null);
       setIsLoadedFromStorage(true);
+      if (savedMetadata) {
+        setDrawingMetadata(savedMetadata);
+      }
       console.log(`Loaded drawing ${drawingId} from drawings-storage`);
       return;
     }
@@ -326,6 +352,9 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
           setStrokeColor={setStrokeColor}
           tolerance={tolerance}
           setTolerance={setTolerance}
+          canvasType={drawingMetadata.canvasType}
+          strokeWidth={strokeWidth}
+          setStrokeWidth={setStrokeWidth}
         />
       </motion.div>
 
@@ -343,6 +372,11 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
           ref={stageRef}
           className="rounded-md overflow-hidden"
         >
+          {drawingMetadata.canvasType === "pixel" && drawingMetadata.gridSize && (
+            <Layer listening={false}>
+              <PixelGrid width={CANVAS_WIDTH} height={CANVAS_HEIGHT} gridSize={drawingMetadata.gridSize} />
+            </Layer>
+          )}
           {layers.map((layer) => {
             if (!layer.isVisible) {
               return null;
@@ -364,21 +398,43 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
                 )}
                 {layer.vectorShapes.map((shape) => {
                   if (shape.tool === "pen" || shape.tool === "eraser") {
-                    return (
-                      <Line
-                        key={shape.id}
-                        id={shape.id}
-                        points={shape.points}
-                        stroke={shape.stroke}
-                        strokeWidth={shape.strokeWidth}
-                        lineCap="round"
-                        lineJoin="round"
-                        tension={shape.tension !== undefined ? shape.tension : 0.1}
-                        globalCompositeOperation={shape.globalCompositeOperation}
-                        perfectDrawEnabled={false}
-                        listening={false}
-                      />
-                    );
+                    if (shape.type === "pixels" && shape.pixels) {
+                      // Render pixel group
+                      return (
+                        <React.Fragment key={shape.id}>
+                          {shape.pixels.map((pixel, index) => (
+                            <Rect
+                              key={`${shape.id}-${index}`}
+                              x={pixel.x}
+                              y={pixel.y}
+                              width={pixel.width}
+                              height={pixel.height}
+                              fill={shape.stroke}
+                              globalCompositeOperation={shape.globalCompositeOperation}
+                              perfectDrawEnabled={false}
+                              listening={false}
+                            />
+                          ))}
+                        </React.Fragment>
+                      );
+                    } else if (shape.points) {
+                      // Render regular line
+                      return (
+                        <Line
+                          key={shape.id}
+                          id={shape.id}
+                          points={shape.points}
+                          stroke={shape.stroke}
+                          strokeWidth={shape.strokeWidth}
+                          lineCap={shape.lineCap || "round"}
+                          lineJoin={shape.lineJoin || "round"}
+                          tension={shape.tension !== undefined ? shape.tension : 0.1}
+                          globalCompositeOperation={shape.globalCompositeOperation}
+                          perfectDrawEnabled={false}
+                          listening={false}
+                        />
+                      );
+                    }
                   }
                   return null;
                 })}
@@ -433,6 +489,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
         history={history}
         currentHistoryIndex={currentHistoryIndex}
         storageKey={ALL_DRAWINGS_STORAGE_KEY}
+        metadata={drawingMetadata}
       />
       <PublishDialog
         isOpen={isPublishDialogOpen}

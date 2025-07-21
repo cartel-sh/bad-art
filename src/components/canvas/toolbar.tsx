@@ -9,11 +9,13 @@ import {
   ColorPickerOutput,
   ColorPickerSelection,
 } from "@/components/ui/color-picker";
+import { CanvasType } from "@/lib/types";
 import Color, { ColorLike } from "color";
 import { Eraser, PaintBucket, Palette, Pencil, PowerIcon, Sliders } from "lucide-react";
 import React, { useState, useCallback, useEffect } from "react";
 import { Input } from "../ui/input";
 import { Slider } from "../ui/slider";
+import { Label } from "../ui/label";
 
 export type Tool = "pen" | "eraser" | "bucket";
 
@@ -25,6 +27,9 @@ interface ToolbarProps {
   setStrokeColor: (color: string) => void;
   tolerance: number;
   setTolerance: (tolerance: number) => void;
+  canvasType?: CanvasType;
+  strokeWidth?: number;
+  setStrokeWidth?: (width: number) => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -35,6 +40,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
   setStrokeColor,
   tolerance,
   setTolerance,
+  canvasType = "regular",
+  strokeWidth = 5,
+  setStrokeWidth,
 }) => {
   const [showColorPickerPopup, setShowColorPickerPopup] = useState(false);
   const [color, setColor] = useState(fillColor);
@@ -101,15 +109,17 @@ const Toolbar: React.FC<ToolbarProps> = ({
         >
           <Eraser className="h-5 w-5" />
         </Button>
-        <Button
-          variant={tool === "bucket" ? "outline" : "secondary"}
-          size="icon"
-          onClick={() => setTool("bucket")}
-          title="Bucket (G)"
-          className="w-10 h-10 hover:bg-background"
-        >
-          <PaintBucket className="h-5 w-5" />
-        </Button>
+        {canvasType === "regular" && (
+          <Button
+            variant={tool === "bucket" ? "outline" : "secondary"}
+            size="icon"
+            onClick={() => setTool("bucket")}
+            title="Bucket (G)"
+            className="w-10 h-10 hover:bg-background"
+          >
+            <PaintBucket className="h-5 w-5" />
+          </Button>
+        )}
         <Button
           variant={showColorPickerPopup ? "outline" : "secondary"}
           size="icon"
@@ -129,22 +139,25 @@ const Toolbar: React.FC<ToolbarProps> = ({
         </Button>
       </div>
 
-      {/* {tool === 'bucket' && (
-        <div className="px-2 absolute top-25 left-14 flex items-center space-x-2 p-1 rounded-md bg-background/20">
-          <label htmlFor="toolbarTolerance" className="flex items-center text-muted-foreground text-sm font-medium" title="Tolerance">
-            Tolerance
-          </label>
+      {canvasType === "regular" && tool === "pen" && setStrokeWidth && (
+        <div className="px-2 py-1">
+          <Label htmlFor="stroke-width" className="text-xs text-muted-foreground">
+            Stroke
+          </Label>
           <Slider
-            id="toolbarTolerance"
-            min={0}
-            max={255}
-            value={[tolerance]}
-            onValueChange={(value) => setTolerance(value[0])}
-            className="w-40 h-6"
-            orientation="horizontal"
+            id="stroke-width"
+            min={1}
+            max={20}
+            step={1}
+            value={[strokeWidth]}
+            onValueChange={(value) => setStrokeWidth(value[0])}
+            className="w-full"
           />
+          <div className="text-xs text-center text-muted-foreground mt-1">
+            {strokeWidth}px
+          </div>
         </div>
-      )} */}
+      )}
 
       {showColorPickerPopup && (
         <ColorPicker

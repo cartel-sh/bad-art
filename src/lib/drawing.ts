@@ -1,10 +1,71 @@
 import Konva from "konva";
 
-export function getPointerPosition(stage: Konva.Stage | null): { x: number; y: number } | null {
+export function getPointerPosition(
+  stage: Konva.Stage | null,
+  gridSize?: number
+): { x: number; y: number } | null {
   if (!stage) return null;
   const pointerPosition = stage.getPointerPosition();
   if (!pointerPosition) return null;
+  
+  if (gridSize && gridSize > 0) {
+    const pixelSize = 500 / gridSize;
+    const pixelX = Math.floor(pointerPosition.x / pixelSize);
+    const pixelY = Math.floor(pointerPosition.y / pixelSize);
+    return {
+      x: pixelX * pixelSize + pixelSize / 2,
+      y: pixelY * pixelSize + pixelSize / 2,
+    };
+  }
+  
   return { x: Math.round(pointerPosition.x), y: Math.round(pointerPosition.y) };
+}
+
+export function getPixelPerfectLine(
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  pixelSize: number
+): number[] {
+  // Convert to pixel coordinates
+  const px0 = Math.floor(x0 / pixelSize);
+  const py0 = Math.floor(y0 / pixelSize);
+  const px1 = Math.floor(x1 / pixelSize);
+  const py1 = Math.floor(y1 / pixelSize);
+  
+  const points: number[] = [];
+  
+  // Bresenham's line algorithm for pixel-perfect lines
+  const dx = Math.abs(px1 - px0);
+  const dy = Math.abs(py1 - py0);
+  const sx = px0 < px1 ? 1 : -1;
+  const sy = py0 < py1 ? 1 : -1;
+  let err = dx - dy;
+  
+  let x = px0;
+  let y = py0;
+  
+  while (true) {
+    // Convert back to canvas coordinates (center of pixel)
+    const canvasX = x * pixelSize + pixelSize / 2;
+    const canvasY = y * pixelSize + pixelSize / 2;
+    points.push(canvasX, canvasY);
+    
+    if (x === px1 && y === py1) break;
+    
+    const e2 = 2 * err;
+    if (e2 > -dy) {
+      err -= dy;
+      x += sx;
+    }
+    if (e2 < dx) {
+      err += dx;
+      y += sy;
+    }
+  }
+  
+  return points;
 }
 
 export function colorsMatch(

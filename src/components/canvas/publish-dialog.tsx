@@ -48,9 +48,15 @@ interface PublishDialogProps {
   onPublish: (uri: string) => void;
   layers: UserLayerData[];
   derivedFromPostId?: string;
+  metadata?: {
+    canvasType: string;
+    gridSize?: number;
+  };
+  canvasWidth?: number;
+  canvasHeight?: number;
 }
 
-const PublishDialog: React.FC<PublishDialogProps> = ({ isOpen, onClose, stageRef, onPublish, layers, derivedFromPostId }) => {
+const PublishDialog: React.FC<PublishDialogProps> = ({ isOpen, onClose, stageRef, onPublish, layers, derivedFromPostId, metadata: canvasMetadata, canvasWidth = 500, canvasHeight = 500 }) => {
   const [imageDataUrl, setImageDataUrl] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [drawingTitle, setDrawingTitle] = useState<string>("");
@@ -124,6 +130,26 @@ const PublishDialog: React.FC<PublishDialogProps> = ({ isOpen, onClose, stageRef
             key: "file",
             value: JSON.stringify(layers),
           },
+          {
+            type: MetadataAttributeType.STRING,
+            key: "canvasType",
+            value: canvasMetadata?.canvasType || "regular",
+          },
+          {
+            type: MetadataAttributeType.NUMBER,
+            key: "canvasWidth",
+            value: String(canvasWidth),
+          },
+          {
+            type: MetadataAttributeType.NUMBER,
+            key: "canvasHeight",
+            value: String(canvasHeight),
+          },
+          ...(canvasMetadata?.canvasType === "pixel" && canvasMetadata?.gridSize ? [{
+            type: MetadataAttributeType.NUMBER as MetadataAttributeType.NUMBER,
+            key: "gridSize",
+            value: String(canvasMetadata.gridSize),
+          }] : []),
         ],
       });
 

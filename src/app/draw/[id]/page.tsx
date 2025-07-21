@@ -505,6 +505,9 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
         onPublish={handlePublishDrawing}
         layers={layers}
         derivedFromPostId={derivedFromPostId}
+        metadata={drawingMetadata}
+        canvasWidth={CANVAS_WIDTH}
+        canvasHeight={CANVAS_HEIGHT}
       />
     </div>
   );

@@ -138,10 +138,24 @@ export default function Sidebar({ post }: SidebarProps) {
       return;
     }
 
+    // Extract canvas attributes
+    const canvasTypeAttr = metadata.attributes?.find((attr) => attr.key === "canvasType");
+    const gridSizeAttr = metadata.attributes?.find((attr) => attr.key === "gridSize");
+    const canvasType = canvasTypeAttr?.value || "regular";
+    const gridSize = gridSizeAttr?.value || 25;
+
     const newDrawingId = createDraftDrawing(layers, post.id);
 
     if (newDrawingId) {
-      router.push(`/draw/${newDrawingId}`);
+      // Build URL with canvas type parameters
+      const params = new URLSearchParams();
+      if (canvasType === "pixel") {
+        params.append("type", "pixel");
+        params.append("gridSize", String(gridSize));
+      }
+      
+      const url = params.toString() ? `/draw/${newDrawingId}?${params.toString()}` : `/draw/${newDrawingId}`;
+      router.push(url);
       toast.success(`Derived ${authorDisplayName}'s drawing!`, { duration: 1000 });
     } else {
       toast.error("Failed to save derived drawing locally.");

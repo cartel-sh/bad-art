@@ -11,13 +11,14 @@ import {
 } from "@/components/ui/color-picker";
 import { CanvasType } from "@/lib/types";
 import Color, { ColorLike } from "color";
-import { Eraser, PaintBucket, Palette, Pencil, PowerIcon, Sliders } from "lucide-react";
+import { Eraser, PaintBucket, Palette, Pencil, PowerIcon, Sliders, CircleIcon } from "lucide-react";
 import React, { useState, useCallback, useEffect } from "react";
 import { Input } from "../ui/input";
 import { Slider } from "../ui/slider";
 import { Label } from "../ui/label";
 
 export type Tool = "pen" | "eraser" | "bucket";
+export type BrushSize = "small" | "medium" | "large";
 
 interface ToolbarProps {
   tool: Tool;
@@ -46,6 +47,15 @@ const Toolbar: React.FC<ToolbarProps> = ({
 }) => {
   const [showColorPickerPopup, setShowColorPickerPopup] = useState(false);
   const [color, setColor] = useState(fillColor);
+  const [brushSize, setBrushSize] = useState<BrushSize>("small");
+  
+  // Define brush sizes for regular and pixel modes
+  const brushSizes = {
+    regular: { small: 5, medium: 10, large: 20 },
+    pixel: { small: 1, medium: 2, large: 3 } // Grid size for pixel mode
+  };
+  
+  const currentBrushSizes = canvasType === "pixel" ? brushSizes.pixel : brushSizes.regular;
 
   const handleColorChange = useCallback(
     (value: ColorLike) => {
@@ -57,6 +67,25 @@ const Toolbar: React.FC<ToolbarProps> = ({
     },
     [setFillColor, setStrokeColor],
   );
+  
+  const cycleBrushSize = useCallback(() => {
+    const sizes: BrushSize[] = ["small", "medium", "large"];
+    const currentIndex = sizes.indexOf(brushSize);
+    const nextIndex = (currentIndex + 1) % sizes.length;
+    const nextSize = sizes[nextIndex];
+    
+    setBrushSize(nextSize);
+    if (setStrokeWidth) {
+      setStrokeWidth(currentBrushSizes[nextSize]);
+    }
+  }, [brushSize, currentBrushSizes, setStrokeWidth]);
+  
+  // Update stroke width when brush size or canvas type changes
+  useEffect(() => {
+    if (setStrokeWidth) {
+      setStrokeWidth(currentBrushSizes[brushSize]);
+    }
+  }, [brushSize, currentBrushSizes, setStrokeWidth]);
 
   // Keyboard shortcuts handler
   useEffect(() => {
@@ -137,27 +166,29 @@ const Toolbar: React.FC<ToolbarProps> = ({
             }}
           />
         </Button>
+        {(tool === "pen" || tool === "eraser") && (
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={cycleBrushSize}
+            title={`Brush Size: ${brushSize} (Click to cycle)`}
+            className="w-10 h-10 hover:bg-background"
+          >
+            <div className="relative flex items-center justify-center w-full h-full">
+              {brushSize === "small" && (
+                <div className={`w-2 h-2 ${canvasType === "pixel" ? "" : "rounded-full"} bg-current`} />
+              )}
+              {brushSize === "medium" && (
+                <div className={`w-4 h-4 ${canvasType === "pixel" ? "" : "rounded-full"} bg-current`} />
+              )}
+              {brushSize === "large" && (
+                <div className={`w-6 h-6 ${canvasType === "pixel" ? "" : "rounded-full"} bg-current`} />
+              )}
+            </div>
+          </Button>
+        )}
       </div>
 
-      {canvasType === "regular" && tool === "pen" && setStrokeWidth && (
-        <div className="px-2 py-1">
-          <Label htmlFor="stroke-width" className="text-xs text-muted-foreground">
-            Stroke
-          </Label>
-          <Slider
-            id="stroke-width"
-            min={1}
-            max={20}
-            step={1}
-            value={[strokeWidth]}
-            onValueChange={(value) => setStrokeWidth(value[0])}
-            className="w-full"
-          />
-          <div className="text-xs text-center text-muted-foreground mt-1">
-            {strokeWidth}px
-          </div>
-        </div>
-      )}
 
       {showColorPickerPopup && (
         <ColorPicker

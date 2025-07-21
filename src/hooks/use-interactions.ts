@@ -59,34 +59,57 @@ export const useDrawingInteractions = ({
       if (!pos || !element) return;
 
       if (canvasType === "pixel" && gridSize && element instanceof Konva.Group) {
-        // For pixel art, add individual pixels
+        // For pixel art, add pixels based on brush size
         const pixelGroup = element;
         const pixelSize = 500 / gridSize;
-        const pixelX = Math.floor(pos.x / pixelSize) * pixelSize;
-        const pixelY = Math.floor(pos.y / pixelSize) * pixelSize;
+        const centerX = Math.floor(pos.x / pixelSize);
+        const centerY = Math.floor(pos.y / pixelSize);
         
-        // Check if we already have a pixel at this position
-        const children = pixelGroup.getChildren();
-        const exists = children.some(child => {
+        // Get brush size from first child's stored data
+        const firstChild = pixelGroup.getChildren()[0] as Konva.Rect;
+        const brushGridSize = firstChild.getAttr('brushGridSize') || 1;
+        
+        // Calculate brush area
+        const offset = Math.floor(brushGridSize / 2);
+        const startX = centerX - offset;
+        const startY = centerY - offset;
+        
+        // Get existing pixels for quick lookup
+        const existingPixels = new Set();
+        pixelGroup.getChildren().forEach(child => {
           const rect = child as Konva.Rect;
-          return rect.x() === pixelX && rect.y() === pixelY;
+          existingPixels.add(`${rect.x()},${rect.y()}`);
         });
         
-        if (!exists) {
-          // Add new pixel
-          const firstChild = pixelGroup.getChildren()[0] as Konva.Rect;
-          const pixel = new Konva.Rect({
-            x: pixelX,
-            y: pixelY,
-            width: pixelSize,
-            height: pixelSize,
-            fill: firstChild.fill(),
-            listening: false,
-            perfectDrawEnabled: false,
-            globalCompositeOperation: firstChild.globalCompositeOperation(),
-          });
-          
-          pixelGroup.add(pixel);
+        // Add pixels in brush area
+        for (let dx = 0; dx < brushGridSize; dx++) {
+          for (let dy = 0; dy < brushGridSize; dy++) {
+            const gridX = startX + dx;
+            const gridY = startY + dy;
+            
+            // Check bounds
+            if (gridX < 0 || gridX >= gridSize || gridY < 0 || gridY >= gridSize) continue;
+            
+            const pixelX = gridX * pixelSize;
+            const pixelY = gridY * pixelSize;
+            const key = `${pixelX},${pixelY}`;
+            
+            if (!existingPixels.has(key)) {
+              const pixel = new Konva.Rect({
+                x: pixelX,
+                y: pixelY,
+                width: pixelSize,
+                height: pixelSize,
+                fill: firstChild.fill(),
+                listening: false,
+                perfectDrawEnabled: false,
+                globalCompositeOperation: firstChild.globalCompositeOperation(),
+              });
+              
+              pixelGroup.add(pixel);
+              existingPixels.add(key);
+            }
+          }
         }
       } else if (element instanceof Konva.Line) {
         // Regular line drawing
@@ -233,22 +256,45 @@ export const useDrawingInteractions = ({
             });
             
             const pixelSize = 500 / gridSize;
-            const pixelX = Math.floor(pos.x / pixelSize) * pixelSize;
-            const pixelY = Math.floor(pos.y / pixelSize) * pixelSize;
+            const centerX = Math.floor(pos.x / pixelSize);
+            const centerY = Math.floor(pos.y / pixelSize);
             
-            // Add first pixel
-            const pixel = new Konva.Rect({
-              x: pixelX,
-              y: pixelY,
-              width: pixelSize,
-              height: pixelSize,
-              fill: strokeColor,
-              listening: false,
-              perfectDrawEnabled: false,
-              globalCompositeOperation: tool === "pen" ? "source-over" : "destination-out",
-            });
+            // Brush size in grid units (1, 2, or 3)
+            const brushGridSize = strokeWidth;
             
-            pixelGroup.add(pixel);
+            // Calculate brush area
+            const offset = Math.floor(brushGridSize / 2);
+            const startX = centerX - offset;
+            const startY = centerY - offset;
+            
+            // Add pixels in brush area
+            for (let dx = 0; dx < brushGridSize; dx++) {
+              for (let dy = 0; dy < brushGridSize; dy++) {
+                const gridX = startX + dx;
+                const gridY = startY + dy;
+                
+                // Check bounds
+                if (gridX < 0 || gridX >= gridSize || gridY < 0 || gridY >= gridSize) continue;
+                
+                const pixelX = gridX * pixelSize;
+                const pixelY = gridY * pixelSize;
+                
+                const pixel = new Konva.Rect({
+                  x: pixelX,
+                  y: pixelY,
+                  width: pixelSize,
+                  height: pixelSize,
+                  fill: strokeColor,
+                  listening: false,
+                  perfectDrawEnabled: false,
+                  globalCompositeOperation: tool === "pen" ? "source-over" : "destination-out",
+                  brushGridSize: brushGridSize, // Store brush size for later use
+                });
+                
+                pixelGroup.add(pixel);
+              }
+            }
+            
             targetLayer.add(pixelGroup);
             currentKonvaLineRef.current = pixelGroup as any; // Store group reference
           } else {

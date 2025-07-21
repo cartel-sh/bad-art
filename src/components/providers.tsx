@@ -27,6 +27,7 @@ const wagmiConfig = createConfig(
   }),
 );
 
+
 export const Providers = ({ children }: { children: JSX.Element }) => {
   const queryClient = new QueryClient();
   const publicClient = getPublicClient();
@@ -36,7 +37,7 @@ export const Providers = ({ children }: { children: JSX.Element }) => {
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
           <ConnectKitProvider>
-            <LensProvider client={publicClient}>
+            <LensProvider client={publicClient as any}>
               <AnimatePresence>
                 <AccountProvider>
                   <FeedProvider>{children}</FeedProvider>

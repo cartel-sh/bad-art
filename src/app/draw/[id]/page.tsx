@@ -29,7 +29,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
   const props = use(params);
   const searchParams = useSearchParams();
   const canvasType = (searchParams.get("type") as CanvasType) || "regular";
-  const gridSize = parseInt(searchParams.get("gridSize") || "25", 10);
+  const gridSize = Number.parseInt(searchParams.get("gridSize") || "25", 10);
   
   const [tool, setTool] = useState<ToolbarUITool>("pen");
   const [drawingMetadata, setDrawingMetadata] = useState<DrawingMetadata>({

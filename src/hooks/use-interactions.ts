@@ -58,9 +58,9 @@ export const useDrawingInteractions = ({
 
       if (!pos || !element) return;
 
-      if (canvasType === "pixel" && gridSize) {
+      if (canvasType === "pixel" && gridSize && element instanceof Konva.Group) {
         // For pixel art, add individual pixels
-        const pixelGroup = element as Konva.Group;
+        const pixelGroup = element;
         const pixelSize = 500 / gridSize;
         const pixelX = Math.floor(pos.x / pixelSize) * pixelSize;
         const pixelY = Math.floor(pos.y / pixelSize) * pixelSize;
@@ -74,22 +74,23 @@ export const useDrawingInteractions = ({
         
         if (!exists) {
           // Add new pixel
+          const firstChild = pixelGroup.getChildren()[0] as Konva.Rect;
           const pixel = new Konva.Rect({
             x: pixelX,
             y: pixelY,
             width: pixelSize,
             height: pixelSize,
-            fill: (element.getChildren()[0] as Konva.Rect).fill(),
+            fill: firstChild.fill(),
             listening: false,
             perfectDrawEnabled: false,
-            globalCompositeOperation: (element.getChildren()[0] as Konva.Rect).globalCompositeOperation(),
+            globalCompositeOperation: firstChild.globalCompositeOperation(),
           });
           
           pixelGroup.add(pixel);
         }
-      } else {
+      } else if (element instanceof Konva.Line) {
         // Regular line drawing
-        const line = element as Konva.Line;
+        const line = element;
         const newPoints = line.points().concat([pos.x, pos.y]);
         line.points(newPoints);
       }

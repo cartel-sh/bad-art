@@ -84,13 +84,13 @@ export default function AuthorInfo({ post }: AuthorInfoProps) {
                   <DropdownMenuContent className="rounded-lg" align="end" side="top">
                     <DropdownMenuItem asChild>
                       <a
-                        href={`https://hey.xyz/posts/${post.slug}`}
+                        href={`https://pingpad.io/p/${post.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center"
                       >
                         <ExternalLink className="mr-2 h-4 w-4" />
-                        <span>Open on hey</span>
+                        <span>Open on Ping</span>
                       </a>
                     </DropdownMenuItem>
                   </DropdownMenuContent>

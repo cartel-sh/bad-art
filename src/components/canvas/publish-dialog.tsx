@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { getLensClient } from "@/lib/lens/client";
 import { storageClient } from "@/lib/lens/storage";
 import { UserLayerData } from "@/lib/types";
-import { MainContentFocus, SessionClient } from "@lens-protocol/client";
+import { MainContentFocus, postId, SessionClient } from "@lens-protocol/client";
 import { fetchPost, post } from "@lens-protocol/client/actions";
 import { handleOperationWith } from "@lens-protocol/client/viem";
 import {
@@ -47,9 +47,10 @@ interface PublishDialogProps {
   stageRef: React.RefObject<Konva.Stage | null>;
   onPublish: (uri: string) => void;
   layers: UserLayerData[];
+  derivedFromPostId?: string;
 }
 
-const PublishDialog: React.FC<PublishDialogProps> = ({ isOpen, onClose, stageRef, onPublish, layers }) => {
+const PublishDialog: React.FC<PublishDialogProps> = ({ isOpen, onClose, stageRef, onPublish, layers, derivedFromPostId }) => {
   const [imageDataUrl, setImageDataUrl] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [drawingTitle, setDrawingTitle] = useState<string>("");
@@ -137,9 +138,17 @@ const PublishDialog: React.FC<PublishDialogProps> = ({ isOpen, onClose, stageRef
           return;
         }
 
-        const result = await post(client as any, {
+        const postOptions: any = {
           contentUri,
-        })
+        };
+        
+        if (derivedFromPostId) {
+          postOptions.quoteOf = {
+            post: postId(derivedFromPostId),
+          };
+        }
+        
+        const result = await post(client as any, postOptions)
           .andThen(handleOperationWith(walletClient))
           .andThen(client.waitForTransaction)
           .andThen((txHash) => fetchPost(client, { txHash }));

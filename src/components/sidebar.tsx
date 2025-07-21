@@ -138,7 +138,7 @@ export default function Sidebar({ post }: SidebarProps) {
       return;
     }
 
-    const newDrawingId = createDraftDrawing(layers);
+    const newDrawingId = createDraftDrawing(layers, post.id);
 
     if (newDrawingId) {
       router.push(`/draw/${newDrawingId}`);

@@ -33,4 +33,5 @@ export interface DrawingMetadata {
 export interface DrawingData {
   layers: UserLayerData[];
   metadata?: DrawingMetadata;
+  derivedFromPostId?: string;
 }

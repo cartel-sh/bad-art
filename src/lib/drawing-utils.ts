@@ -1,4 +1,4 @@
-import { UserLayerData } from "@/lib/types";
+import { UserLayerData, DrawingData } from "@/lib/types";
 
 export const LOCAL_STORAGE_DRAWINGS_KEY = "drawings-storage";
 
@@ -110,12 +110,12 @@ export const generateNewDrawingId = (): string => {
 
 export const saveDrawingToLocalStorage = (
   drawingId: string,
-  layers: UserLayerData[],
+  drawingData: DrawingData | UserLayerData[],
   storageKey: string = LOCAL_STORAGE_DRAWINGS_KEY,
 ): boolean => {
   try {
     const allSavedDrawingsJSON = localStorage.getItem(storageKey);
-    let allDrawings: { [key: string]: UserLayerData[] } = {};
+    let allDrawings: { [key: string]: DrawingData | UserLayerData[] } = {};
 
     if (allSavedDrawingsJSON) {
       try {
@@ -125,7 +125,14 @@ export const saveDrawingToLocalStorage = (
         allDrawings = {};
       }
     }
-    allDrawings[drawingId] = layers;
+    
+    // Handle both old format (array) and new format (DrawingData)
+    if (Array.isArray(drawingData)) {
+      allDrawings[drawingId] = drawingData;
+    } else {
+      allDrawings[drawingId] = drawingData;
+    }
+    
     localStorage.setItem(storageKey, JSON.stringify(allDrawings));
     return true;
   } catch (error) {
@@ -136,10 +143,15 @@ export const saveDrawingToLocalStorage = (
 
 export const createDraftDrawing = (
   layers: UserLayerData[],
+  derivedFromPostId?: string,
   storageKey: string = LOCAL_STORAGE_DRAWINGS_KEY,
 ): string | null => {
   const newDrawingId = generateNewDrawingId();
-  if (saveDrawingToLocalStorage(newDrawingId, layers, storageKey)) {
+  const drawingData: DrawingData = {
+    layers,
+    ...(derivedFromPostId && { derivedFromPostId }),
+  };
+  if (saveDrawingToLocalStorage(newDrawingId, drawingData, storageKey)) {
     return newDrawingId;
   }
   return null;

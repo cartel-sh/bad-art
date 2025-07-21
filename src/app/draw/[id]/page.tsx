@@ -36,6 +36,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
     canvasType,
     gridSize: canvasType === "pixel" ? gridSize : undefined,
   });
+  const [derivedFromPostId, setDerivedFromPostId] = useState<string | undefined>(undefined);
 
   const [layers, setLayersInternal] = useState<UserLayerData[]>([]);
   const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
@@ -117,6 +118,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
     const savedDrawing = allDrawings[drawingId];
     let savedLayers: UserLayerData[] | null = null;
     let savedMetadata: DrawingMetadata | null = null;
+    let savedDerivedFromPostId: string | undefined = undefined;
 
     if (savedDrawing) {
       if (Array.isArray(savedDrawing)) {
@@ -124,6 +126,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
       } else if (savedDrawing.layers) {
         savedLayers = savedDrawing.layers;
         savedMetadata = savedDrawing.metadata;
+        savedDerivedFromPostId = savedDrawing.derivedFromPostId;
       }
     }
 
@@ -135,6 +138,9 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
       setIsLoadedFromStorage(true);
       if (savedMetadata) {
         setDrawingMetadata(savedMetadata);
+      }
+      if (savedDerivedFromPostId) {
+        setDerivedFromPostId(savedDerivedFromPostId);
       }
       console.log(`Loaded drawing ${drawingId} from drawings-storage`);
       return;
@@ -490,6 +496,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
         currentHistoryIndex={currentHistoryIndex}
         storageKey={ALL_DRAWINGS_STORAGE_KEY}
         metadata={drawingMetadata}
+        derivedFromPostId={derivedFromPostId}
       />
       <PublishDialog
         isOpen={isPublishDialogOpen}
@@ -497,6 +504,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
         stageRef={stageRef}
         onPublish={handlePublishDrawing}
         layers={layers}
+        derivedFromPostId={derivedFromPostId}
       />
     </div>
   );

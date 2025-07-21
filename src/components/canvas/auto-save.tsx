@@ -10,6 +10,7 @@ interface AutoSaveProps {
   currentHistoryIndex: number;
   storageKey: string;
   metadata?: DrawingMetadata;
+  derivedFromPostId?: string;
 }
 
 export default function AutoSave({
@@ -21,6 +22,7 @@ export default function AutoSave({
   currentHistoryIndex,
   storageKey,
   metadata,
+  derivedFromPostId,
 }: AutoSaveProps) {
   useEffect(() => {
     if (!drawingId || !layers.length) {
@@ -54,6 +56,7 @@ export default function AutoSave({
         const drawingData: DrawingData = {
           layers,
           metadata,
+          ...(derivedFromPostId && { derivedFromPostId }),
         };
         
         allDrawings[drawingId] = drawingData;
@@ -64,7 +67,7 @@ export default function AutoSave({
         console.error(`Failed to save drawing ${drawingId} to localStorage (key: ${storageKey})`, error);
       }
     }
-  }, [layers, drawingId, isLoadedFromStorage, setIsLoadedFromStorage, history, currentHistoryIndex, storageKey, metadata]);
+  }, [layers, drawingId, isLoadedFromStorage, setIsLoadedFromStorage, history, currentHistoryIndex, storageKey, metadata, derivedFromPostId]);
 
   return null;
 }

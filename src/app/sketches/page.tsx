@@ -48,18 +48,37 @@ async function generateSketchPreview(layers: UserLayerData[], width: number, hei
       userLayer.vectorShapes.forEach((shape: VectorShapeData) => {
         if (shape.tool === "pen" || shape.tool === "eraser") {
           const op = shape.globalCompositeOperation || "source-over";
-          const line = new Konva.Line({
-            points: shape.points,
-            stroke: shape.stroke,
-            strokeWidth: shape.strokeWidth,
-            lineCap: "round",
-            lineJoin: "round",
-            tension: shape.tension !== undefined ? shape.tension : 0.1,
-            globalCompositeOperation: op as Konva.LineConfig["globalCompositeOperation"],
-            perfectDrawEnabled: false,
-            listening: false,
-          });
-          konvaLayer.add(line);
+          
+          if (shape.type === "pixels" && shape.pixels) {
+            // Render pixel shapes
+            shape.pixels.forEach(pixel => {
+              const rect = new Konva.Rect({
+                x: pixel.x,
+                y: pixel.y,
+                width: pixel.width,
+                height: pixel.height,
+                fill: shape.stroke,
+                globalCompositeOperation: op as Konva.RectConfig["globalCompositeOperation"],
+                perfectDrawEnabled: false,
+                listening: false,
+              });
+              konvaLayer.add(rect);
+            });
+          } else if (shape.points) {
+            // Render regular lines
+            const line = new Konva.Line({
+              points: shape.points,
+              stroke: shape.stroke,
+              strokeWidth: shape.strokeWidth,
+              lineCap: shape.lineCap || "round",
+              lineJoin: shape.lineJoin || "round",
+              tension: shape.tension !== undefined ? shape.tension : 0.1,
+              globalCompositeOperation: op as Konva.LineConfig["globalCompositeOperation"],
+              perfectDrawEnabled: false,
+              listening: false,
+            });
+            konvaLayer.add(line);
+          }
         }
       });
     };
@@ -153,7 +172,7 @@ export default function SketchesPage() {
     try {
       const allSavedDrawingsJSON = localStorage.getItem(ALL_DRAWINGS_STORAGE_KEY);
       if (allSavedDrawingsJSON) {
-        const allDrawings: { [key: string]: UserLayerData[] } = JSON.parse(allSavedDrawingsJSON);
+        const allDrawings: { [key: string]: any } = JSON.parse(allSavedDrawingsJSON);
         selectedSketches.forEach((sketchId) => {
           delete allDrawings[sketchId];
         });
@@ -190,9 +209,23 @@ export default function SketchesPage() {
           return;
         }
 
-        const allDrawings: { [key: string]: UserLayerData[] } = JSON.parse(allSavedDrawingsJSON);
+        const allDrawings: { [key: string]: any } = JSON.parse(allSavedDrawingsJSON);
 
-        const sketchPromises = Object.entries(allDrawings).map(async ([drawingId, layers]) => {
+        const sketchPromises = Object.entries(allDrawings).map(async ([drawingId, drawingData]) => {
+          // Handle both old format (array) and new format (object with layers)
+          let layers: UserLayerData[];
+          if (Array.isArray(drawingData)) {
+            layers = drawingData;
+          } else if (drawingData.layers) {
+            layers = drawingData.layers;
+          } else {
+            return {
+              id: drawingId,
+              previewUrl: null,
+              name: drawingId,
+            };
+          }
+
           if (!layers || layers.length === 0) {
             return {
               id: drawingId,

@@ -85,7 +85,7 @@ export function Feed() {
       const result = await fetchPosts(client, {
         filter: {
           apps: [APP],
-          postTypes: [PostType.Root],
+          postTypes: [PostType.Root, PostType.Quote],
           metadata: {
             mainContentFocus: [MainContentFocus.Image],
           },
